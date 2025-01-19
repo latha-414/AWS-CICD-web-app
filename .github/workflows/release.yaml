@@ -3,7 +3,11 @@ name: Auto Release and PR Info
 on:
   push:
     branches:
-      - pr-branch
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
   release:
@@ -33,3 +37,4 @@ jobs:
             **PR Number:** ${{ steps.pr_info.outputs.number }}
             **PR Description:** ${{ steps.pr_info.outputs.body }}
           draft: false
+          prerelease: false
