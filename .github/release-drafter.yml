@@ -1,5 +1,3 @@
-name-template: 'Release ${{ tag_name }}'
-tag-template: 'v${{ version }}'
 categories:
   - title: "🚀 Features"
     labels:
@@ -7,13 +5,34 @@ categories:
   - title: "🐛 Bug Fixes"
     labels:
       - "bug"
-  - title: "🧹 Chores"
+  - title: "📝 Documentation"
     labels:
-      - "chore"
+      - "documentation"
+  - title: "⚠️ Duplicates"
+    labels:
+      - "duplicate"
+  - title: "👶 First Issues"
+    labels:
+      - "good first issue"
+  - title: "🛠 Help Wanted"
+    labels:
+      - "help wanted"
+  - title: "❌ Invalid"
+    labels:
+      - "invalid"
+  - title: "❓ Questions"
+    labels:
+      - "question"
+  - title: "🚫 Won't Fix"
+    labels:
+      - "wontfix"
+
 template: |
   ## Changes
   $CHANGES
 
   ## Contributors
   $CONTRIBUTORS
-change-template: '- ${{ title }} (#${{ number }}) by @${{ author }}'
+
+  ## Pull Requests
+  $PULL_REQUESTS
