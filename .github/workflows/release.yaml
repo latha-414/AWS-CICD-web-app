@@ -1,28 +1,40 @@
-name: Create Release
+name: Auto Release and PR Info
 
 on:
   push:
     branches:
-      - main # Trigger on pushes to the 'release' branch
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest # Choose your desired runner
+  release:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+
+      - name: Get PR Information
+        id: pr_info
+        uses: cloudposse-github-actions/get-pr@main
+        with:
+          id: ${{ github.event.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
-        uses: softprops/action-gh-release@v6
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          draft: false # Set to true for draft releases
-          prerelease: false # Set to true for pre-release
-          tag_name: ${{ github.ref_name }} # Use the release branch name as tag
-          name: ${{ github.ref_name }} # Use the release name
+          tag_name: v${{ steps.pr_info.outputs.number }}
+          release_name: Release ${{ steps.pr_info.outputs.number }}
           body: |
-            *Release Notes:*
-             *Merged from:** ${{ github.event.pull_request.html_url }} 
-             *Title:** ${{ github.event.pull_request.title }}
-             *Author:** ${{ github.event.pull_request.user.login }}
-             *Description:** ${{ github.event.pull_request.body }}
+            **Title:** ${{ steps.pr_info.outputs.title }}
+            **Author:** ${{ steps.pr_info.outputs.author }}
+            **PR Number:** ${{ steps.pr_info.outputs.number }}
+            **PR Description:** ${{ steps.pr_info.outputs.body }}
+          draft: false
+          prerelease: false
