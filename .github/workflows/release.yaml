@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     branches:
-      - release # Trigger on pushes to the 'release' branch
+      - pr-branch # Trigger on pushes to the 'release' branch
 
 jobs:
   build:
