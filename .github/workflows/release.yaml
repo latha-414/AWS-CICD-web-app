@@ -1,9 +1,8 @@
 name: Auto Release and PR Info
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, edited]
 
 permissions:
   contents: write
@@ -17,12 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Get PR Information
+      - name: Fetch PR Information
         id: pr_info
-        uses: cloudposse-github-actions/get-pr@main
-        with:
-          id: ${{ github.event.number }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_number=${{ github.event.pull_request.number }}
+          pr_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                     "https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number")
+          echo "::set-output name=title::$(echo $pr_info | jq -r .title)"
+          echo "::set-output name=author::$(echo $pr_info | jq -r .user.login)"
+          echo "::set-output name=number::$(echo $pr_info | jq -r .number)"
+          echo "::set-output name=body::$(echo $pr_info | jq -r .body)"
 
       - name: Debug PR Info
         run: |
