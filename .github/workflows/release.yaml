@@ -24,6 +24,13 @@ jobs:
           id: ${{ github.event.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug PR Info
+        run: |
+          echo "Title: ${{ steps.pr_info.outputs.title }}"
+          echo "Author: ${{ steps.pr_info.outputs.author }}"
+          echo "Number: ${{ steps.pr_info.outputs.number }}"
+          echo "Description: ${{ steps.pr_info.outputs.body }}"
+
       - name: Create Release
         uses: actions/create-release@v1
         env:
