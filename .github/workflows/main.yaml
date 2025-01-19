@@ -1,57 +1,44 @@
-name: Tag and release
+name: Create Release
+
 on:
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-        - major
-        - minor
-        - patch
-        
-permissions:
-  contents: write
-  pull-requests: read
+  push:
+    branches:
+      - main
 
 jobs:
-  create_release:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v1
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js (optional, depending on your project)
+        uses: actions/setup-node@v2
         with:
-          fetch-depth: 0
-          
-      - name: Tag and Release
-        id: tag_release
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.release_type }}
-          tag_prefix: v
-          
-      - name: Get New Tag
-        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
-      
-      - name: Generate Changelog
-        id: changelog
-        uses: release-drafter/release-drafter@v5
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+          node-version: '14'
+
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: "${{ env.NEW_TAG }}"
-          release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.body }}"
-          draft: false
-          prerelease: false
+
+      - name: Get PR Information
+        id: pr_info
+        run: |
+          PRS=$(gh pr list --state merged --base main --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"')
+          echo "PRS=$PRS" >> $GITHUB_ENV
+
+      - name: Add PR Info to Release Notes
+        run: |
+          echo "Release Notes: ${{ env.PRS }}" >> $GITHUB_ENV
+
+      - name: Publish Release with PR Info
+        run: |
+          gh release create ${{ github.sha }} --title "Release ${{ github.sha }}" --notes "${{ env.PRS }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
