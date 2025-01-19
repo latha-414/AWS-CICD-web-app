@@ -3,42 +3,26 @@ name: Create Release
 on:
   push:
     branches:
-      - main
+      - main # Trigger on pushes to the 'release' branch
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest # Choose your desired runner
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js (optional, depending on your project)
-        uses: actions/setup-node@v2
+      - name: Create Release
+        uses: softprops/action-gh-release@v6
         with:
-          node-version: '14'
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get PR Information
-        id: pr_info
-        run: |
-          PRS=$(gh pr list --state merged --base main --json number,title,url --jq '.[] | "PR #\(.number): \(.title) - \(.url)"')
-          echo "PRS=$PRS" >> $GITHUB_ENV
-
-      - name: Add PR Info to Release Notes
-        run: |
-          echo "Release Notes: ${{ env.PRS }}" >> $GITHUB_ENV
-
-      - name: Publish Release with PR Info
-        run: |
-          gh release create ${{ github.sha }} --title "Release ${{ github.sha }}" --notes "${{ env.PRS }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          draft: false # Set to true for draft releases
+          prerelease: false # Set to true for pre-release
+          tag_name: ${{ github.ref_name }} # Use the release branch name as tag
+          name: ${{ github.ref_name }} # Use the release name
+          body: |
+            *Release Notes:*
+             *Merged from:** ${{ github.event.pull_request.html_url }} 
+             *Title:** ${{ github.event.pull_request.title }}
+             *Author:** ${{ github.event.pull_request.user.login }}
+             *Description:** ${{ github.event.pull_request.body }}
