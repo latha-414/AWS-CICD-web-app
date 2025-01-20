@@ -63,11 +63,13 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get PR Details and append to the changelog
+
       - name: Get PR Details
         run: |
-          pr_details=$(gh pr list --state merged --base 508 --json number,title,url)
+          pr_details=$(gh pr list --state merged --base pr-branch --json number,title,url)
           echo "### PR Details" >> CHANGELOG.md
-          echo "$pr_details" | jq -r '.[] | "- PR #\(.number): [\(.title)](\(.url))"' >> CHANGELOG.md
+          echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title' >> CHANGELOG.md
+
 
       # Create GitHub Release
       - name: Create GitHub Release
