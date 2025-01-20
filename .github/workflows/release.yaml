@@ -72,7 +72,13 @@ jobs:
         id: pr_details
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ github.event.pull_request.number }}
+          id: ${{ github.event.number }}
+
+      - name: Append PR Details to Changelog
+        run: |
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](${ {steps.pr_details.outputs.url}}): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author.login }}" >> CHANGELOG.md
+
 
       # Create GitHub Release
       - name: Create GitHub Release
