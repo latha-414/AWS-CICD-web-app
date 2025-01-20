@@ -12,6 +12,11 @@ on:
           - major
           - minor
           - patch
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
@@ -60,9 +65,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Debug PR Details Output
+      # Show PR Details Output (Debugging)
       - name: Show PR Details Output
         run: |
+          echo "PR Details Output: ${{ steps.pr_details.outputs }}"
           echo "PR Number: ${{ steps.pr_details.outputs.number }}"
           echo "PR Title: ${{ steps.pr_details.outputs.title }}"
           echo "PR Body: ${{ steps.pr_details.outputs.body }}"
