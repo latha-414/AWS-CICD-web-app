@@ -67,18 +67,19 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Pull Request Labeler action
+      # Get PR Details using Get PR action
       - name: Get PR Details
-        uses: actions/pull-request-labeler@v3
+        uses: cloudposse-github-actions/get-pr@main
         id: pr_details
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          id: ${{ github.event.number }}
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.html_url }}): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](" ${{ steps.pr_details.outputs.url }} "): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
