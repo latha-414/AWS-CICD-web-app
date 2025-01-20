@@ -1,17 +1,9 @@
 name: Tag and Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
+  pull_request:
+    branches:
+      - main  # Trigger workflow on PR to main
 
 permissions:
   contents: write
@@ -34,12 +26,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gh
-
+          
       # Authenticate GitHub CLI
       - name: Authenticate GitHub CLI
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-
+          
       # Debug GitHub CLI authentication
       - name: Debug GitHub CLI Authentication
         run: gh auth status
@@ -67,17 +59,19 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+      # Get PR Details
       - name: Get PR Details
         uses: cloudposse-github-actions/get-pr@main
         id: pr_details
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.number }}
+          id: ${{ github.event.pull_request.number }}  # Use PR number from event
 
+      # Append PR Details to Changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr.outputs.number }}](${{ steps.pr.outputs.url }}): ${ { steps.pr.outputs.title }} by @${{ fromJSON(steps.pr.outputs.json).user.login }}" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.url }}): ${ { steps.pr_details.outputs.title }} by @${{ fromJSON(steps.pr_details.outputs.json).user.login }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
