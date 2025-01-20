@@ -41,18 +41,24 @@ jobs:
         with:
           id: ${{ github.event.number }}
 
-      # Tag and Release
-      - name: Tag and Release
-        id: tag_release
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.release_type }}
-          tag_prefix: v
+      # Export the PR details as environment variables
+      - name: Export PR Details
+        run: |
+          echo "PR_NUMBER=${{ steps.pr_details.outputs.number }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ steps.pr_details.outputs.title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ steps.pr_details.outputs.body }}" >> $GITHUB_ENV
+          PR_AUTHOR=$(echo "${{ steps.pr_details.outputs.json }}" | jq -r '.user.login')
+          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
 
-      # Export the new tag
-      - name: Get New Tag
-        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+  generate_changelog:
+    runs-on: ubuntu-latest
+    needs: create_release
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # Generate Changelog with PR Details
       - name: Generate Changelog
@@ -64,10 +70,20 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
         env:
-          PR_NUMBER: ${{ steps.pr_details.outputs.number }}
-          PR_TITLE: ${{ steps.pr_details.outputs.title }}
-          PR_BODY: ${{ steps.pr_details.outputs.body }}
-          PR_AUTHOR: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
+          PR_NUMBER: ${{ needs.create_release.outputs.number }}
+          PR_TITLE: ${{ needs.create_release.outputs.title }}
+          PR_BODY: ${{ needs.create_release.outputs.body }}
+          PR_AUTHOR: ${{ needs.create_release.outputs.author }}
+
+  create_release_job:
+    runs-on: ubuntu-latest
+    needs: generate_changelog
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # Create GitHub Release
       - name: Create GitHub Release
@@ -80,9 +96,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    outputs:
-      number: ${{ steps.pr_details.outputs.number }}
-      title: ${{ steps.pr_details.outputs.title }}
-      body: ${{ steps.pr_details.outputs.body }}
-      author: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
