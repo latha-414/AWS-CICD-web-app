@@ -21,17 +21,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository from the '508' branch
+      # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: pr-branch
 
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
-        with:
-          gh_token: ${{ secrets.GITHUB_TOKEN }} 
+      # Install GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      # Authenticate GitHub CLI
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       # Tag and Release
       - name: Tag and Release
@@ -41,7 +47,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
-          
+
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
@@ -56,12 +62,12 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR details and append to the changelog
+      # Get PR Details and append to the changelog
       - name: Get PR Details
         run: |
           pr_details=$(gh pr list --state merged --base 508 --json number,title,url)
           echo "### PR Details" >> CHANGELOG.md
-          echo "$pr_details" >> CHANGELOG.md
+          echo "$pr_details" | jq -r '.[] | "- PR #\(.number): [\(.title)](\(.url))"' >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
