@@ -60,20 +60,24 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-     
+      # Debug PR Details Output
+      - name: Debug PR Details
+        run: |
+          echo "PR Details: ${{ steps.pr_details.outputs.json }}"
 
       # Extract PR Author from Outputs
       - name: Extract PR Author
         id: extract_author
         run: |
-          echo "PR_AUTHOR=${{ fromJSON(steps.pr_details.outputs.json).author }}" >> $GITHUB_ENV
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).author.login }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ steps.pr_details.outputs.number }}"
-          PR_TITLE="${{ steps.pr_details.outputs.title }}"
-          PR_URL="${{ steps.pr_details.outputs.url }}"
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           PR_AUTHOR="${{ env.PR_AUTHOR }}"
           
           # Create Changelog with Release Version and PR Details
