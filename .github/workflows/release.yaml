@@ -40,11 +40,6 @@ jobs:
         uses: cloudposse-github-actions/get-pr@main
         with:
           id: ${{ github.event.number }}
-      outputs:
-        number: ${{ steps.pr_details.outputs.number }}
-        title: ${{ steps.pr_details.outputs.title }}
-        body: ${{ steps.pr_details.outputs.body }}
-        author: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
 
       # Tag and Release
       - name: Tag and Release
@@ -59,7 +54,7 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Generate Changelog
+      # Generate Changelog with PR Details
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
@@ -72,7 +67,7 @@ jobs:
           PR_NUMBER: ${{ steps.pr_details.outputs.number }}
           PR_TITLE: ${{ steps.pr_details.outputs.title }}
           PR_BODY: ${{ steps.pr_details.outputs.body }}
-          PR_AUTHOR: ${{ steps.pr_details.outputs.author }}
+          PR_AUTHOR: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
 
       # Create GitHub Release
       - name: Create GitHub Release
@@ -85,3 +80,9 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      number: ${{ steps.pr_details.outputs.number }}
+      title: ${{ steps.pr_details.outputs.title }}
+      body: ${{ steps.pr_details.outputs.body }}
+      author: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
