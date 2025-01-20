@@ -53,17 +53,8 @@ jobs:
           output-file: CHANGELOG.md
 
       # Fetch PR Details using GitHub Marketplace Action
-      - name: Get PR Details
-        id: pr_details
-        uses: peter-evans/create-pull-request@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Pull Request Details"
-          body: |
-            ### PR Details
-            {{#each github.event.pull_requests}}
-            - PR [{{this.number}}]({{this.url}}): {{this.title}}
-            {{/each}}
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
 
       # Create GitHub Release
       - name: Create GitHub Release
