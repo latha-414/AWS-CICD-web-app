@@ -1,50 +1,73 @@
-name: Auto Release and PR Info
-
+name: Tag and release
 on:
-  pull_request:
-    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
 
 permissions:
   contents: write
   pull-requests: read
 
 jobs:
-  release:
+  create_release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+          ref: QM-508
 
-      - name: Fetch PR Information
-        id: pr_info
-        run: |
-          pr_number=${{ github.event.pull_request.number }}
-          pr_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                     "https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number")
-          echo "::set-output name=title::$(echo $pr_info | jq -r .title)"
-          echo "::set-output name=author::$(echo $pr_info | jq -r .user.login)"
-          echo "::set-output name=number::$(echo $pr_info | jq -r .number)"
-          echo "::set-output name=body::$(echo $pr_info | jq -r .body)"
+      - name: Tag and Release
+        id: tag_release
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: ${{ github.event.inputs.release_type }}
+          tag_prefix: v
+          
+      - name: Get New Tag
+        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Debug PR Info
-        run: |
-          echo "Title: ${{ steps.pr_info.outputs.title }}"
-          echo "Author: ${{ steps.pr_info.outputs.author }}"
-          echo "Number: ${{ steps.pr_info.outputs.number }}"
-          echo "Description: ${{ steps.pr_info.outputs.body }}"
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: QM-508 
+          tag-prefix: v
+          output-file: CHANGELOG.md
 
-      - name: Create Release
+      - name: Fetch Merged PRs
+        id: pr_details
+        uses: peter-evans/pull-request-link@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          base: QM-508
+          state: merged
+          output: pr_details
+
+      - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.pr_info.outputs.number }}
-          release_name: Release ${{ steps.pr_info.outputs.number }}
+          tag_name: "${{ env.NEW_TAG }}"
+          release_name: "Release ${{ env.NEW_TAG }}"
           body: |
-            **Title:** ${{ steps.pr_info.outputs.title }}
-            **Author:** ${{ steps.pr_info.outputs.author }}
-            **PR Number:** ${{ steps.pr_info.outputs.number }}
-            **PR Description:** ${{ steps.pr_info.outputs.body }}
+            Changelog:
+            ${{ steps.changelog.outputs.changelog }}
+            
+            Merged PRs:
+            ${{ steps.pr_details.outputs.pr_details }}
           draft: false
           prerelease: false
