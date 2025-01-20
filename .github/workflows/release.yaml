@@ -67,9 +67,9 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Pull Request Fetcher action
+      # Get PR Details using Fetch list of Pull Request changed files action
       - name: Get PR Details
-        uses: lumen5/pull-request-fetcher@v1.0.3
+        uses: MiguelDomingues/fetch-list-of-pull-request-changed-files@v1.0.3
         id: pr_details
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
