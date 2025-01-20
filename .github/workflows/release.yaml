@@ -60,14 +60,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Debug the PR Details
+      # Debug PR Details Output
       - name: Debug PR Details
+        run: echo "PR Details: ${{ toJSON(steps.pr_details.outputs) }}"
+
+      # Extract PR Author from Outputs
+      - name: Extract PR Author
+        id: extract_author
         run: |
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
-          echo "PR URL: ${{ steps.pr_details.outputs.url }}"
-          echo "PR Author: ${{ steps.pr_details.outputs.author }}"
-          echo "PR_AUTHOR=${{ steps.pr_details.outputs.author }}" >> $GITHUB_ENV
+          echo "PR_AUTHOR=${{ fromJSON(steps.pr_details.outputs.json).author }}" >> $GITHUB_ENV
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
