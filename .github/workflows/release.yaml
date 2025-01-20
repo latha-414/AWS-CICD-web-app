@@ -65,11 +65,11 @@ jobs:
         run: |
           echo "PR Details: ${{ steps.pr_details.outputs.json }}"
 
-      # Extract PR Author from Outputs
+      # Extract PR Author using GitHub event
       - name: Extract PR Author
         id: extract_author
         run: |
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).author.login }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
       # Append PR Details to the changelog
