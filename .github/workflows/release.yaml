@@ -42,7 +42,7 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Generate Changelog
+      # Generate Changelog using Conventional Changelog
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
@@ -52,20 +52,18 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details and append to the changelog
+      # Fetch PR Details using GitHub Marketplace Action
       - name: Get PR Details
         id: pr_details
         uses: peter-evans/create-pull-request@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          output-file: pr-details.json
-          pr-number: ${{ github.event.pull_request.number }}
-
-      # Append PR details to changelog
-      - name: Append PR Details to Changelog
-        run: |
-          echo "### PR Details" >> CHANGELOG.md
-          cat pr-details.json | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title' >> CHANGELOG.md
+          title: "Pull Request Details"
+          body: |
+            ### PR Details
+            {{#each github.event.pull_requests}}
+            - PR [{{this.number}}]({{this.url}}): {{this.title}}
+            {{/each}}
 
       # Create GitHub Release
       - name: Create GitHub Release
