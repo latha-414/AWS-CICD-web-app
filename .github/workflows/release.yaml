@@ -13,6 +13,11 @@ on:
           - minor
           - patch
 
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
 permissions:
   contents: write
   pull-requests: read
@@ -28,6 +33,18 @@ jobs:
         with:
           fetch-depth: 0
           ref: pr-branch
+
+      # Get PR Details using Get PR action
+      - name: Get PR Details
+        id: pr_details
+        uses: cloudposse-github-actions/get-pr@main
+        with:
+          id: ${{ github.event.number }}
+      outputs:
+        number: ${{ steps.pr_details.outputs.number }}
+        title: ${{ steps.pr_details.outputs.title }}
+        body: ${{ steps.pr_details.outputs.body }}
+        author: ${{ fromJSON(steps.pr_details.outputs.json).user.login }}
 
       # Tag and Release
       - name: Tag and Release
@@ -51,20 +68,11 @@ jobs:
           git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      # Get PR Details using Get PR Action
-      - name: Get PR Details
-        uses: cloudposse-github-actions/get-pr@main
-        id: pr_details
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.number }}
-
-    outputs:
-      number: ${{ steps.pr_details.outputs.number }}
-      title: ${{ steps.pr_details.outputs.title }}
-      body: ${{ steps.pr_details.outputs.body }}
-      author: ${{ steps.pr_details.outputs.user.login }}  # PR author (username)
+        env:
+          PR_NUMBER: ${{ steps.pr_details.outputs.number }}
+          PR_TITLE: ${{ steps.pr_details.outputs.title }}
+          PR_BODY: ${{ steps.pr_details.outputs.body }}
+          PR_AUTHOR: ${{ steps.pr_details.outputs.author }}
 
       # Create GitHub Release
       - name: Create GitHub Release
