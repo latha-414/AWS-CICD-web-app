@@ -1,9 +1,17 @@
 name: Tag and Release
 
 on:
-  pull_request:
-    branches:
-      - main  # Trigger workflow on PR to main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 permissions:
   contents: write
@@ -26,12 +34,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gh
-          
+
       # Authenticate GitHub CLI
       - name: Authenticate GitHub CLI
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          
+
       # Debug GitHub CLI authentication
       - name: Debug GitHub CLI Authentication
         run: gh auth status
@@ -59,19 +67,18 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details
-      - name: Get PR Details
-        uses: cloudposse-github-actions/get-pr@main
-        id: pr_details
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.pull_request.number }}  # Use PR number from event
+      # Get PR Author using GitHub CLI
+      - name: Get PR Author
+        run: |
+          PR_AUTHOR=$(gh pr view ${{ github.event.number }} --json author --jq '.author.login')
+          echo "PR Author: $PR_AUTHOR"
+          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
 
-      # Append PR Details to Changelog
+      # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.url }}): ${ { steps.pr_details.outputs.title }} by @${{ fromJSON(steps.pr_details.outputs.json).user.login }}" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.url }}): ${{ steps.pr_details.outputs.title }} by @$PR_AUTHOR" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
