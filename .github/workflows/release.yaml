@@ -65,12 +65,13 @@ jobs:
         run: |
           echo "PR Details: ${{ steps.pr_details.outputs.json }}"
         
-      # Get PR Author using GitHub CLI
-      - name: Get PR Author
+    # Get PR Author without GitHub CLI
+      - name: Extract PR Author
         run: |
-          PR_AUTHOR=$(gh pr view ${{ github.event.number }} --json author --jq '.author.login')
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).author.login }}"
           echo "PR Author: $PR_AUTHOR"
           echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
+
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
