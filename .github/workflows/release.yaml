@@ -28,6 +28,11 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v2
+        with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }} 
+
       # Tag and Release
       - name: Tag and Release
         id: tag_release
