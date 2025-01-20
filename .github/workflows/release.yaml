@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: main  # Use the main branch
+          ref: pr-branch
 
       # Install GitHub CLI
       - name: Install GitHub CLI
@@ -63,7 +63,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: main  # Use the main branch
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
