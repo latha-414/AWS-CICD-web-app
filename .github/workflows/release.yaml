@@ -60,10 +60,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Debug PR Details Output
-      - name: Debug PR Details
-        run: |
-          echo "PR Details: ${{ steps.pr_details.outputs.json }}"
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
