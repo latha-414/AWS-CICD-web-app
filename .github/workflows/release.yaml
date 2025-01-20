@@ -67,25 +67,18 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Install jq
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      # Get PR Details and append to the changelog
-           # Get PR Details and append to the changelog
+      # Get PR Details using marketplace action
       - name: Get PR Details
-        run: |
-          gh pr list --state merged --base main --json number,title,url,author > pr_debug.json
-          echo "PR Debug JSON:"
-          cat pr_debug.json
-          pr_details=$(cat pr_debug.json)
-          echo "### PR Details" >> CHANGELOG.md
-          if [[ -z "$pr_details" ]]; then
-            echo "No PRs found" >> CHANGELOG.md
-          else
-            echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title + " by @" + .author.login' >> CHANGELOG.md
-          fi
+        uses: ramonsnir/gh-action-pr-details@1.0.3
+        id: pr_details
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Append PR Details to the changelog
+      - name: Append PR Details to Changelog
+        run: |
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.pr_number }}](" ${{ steps.pr_details.outputs.pr_url }} "): ${{ steps.pr_details.outputs.pr_title }} by @${{ steps.pr_details.outputs.pr_author }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
