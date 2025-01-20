@@ -68,12 +68,11 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get PR Details using Pull Request Details action
-      - name: Get PR Details
-        uses: tibordivis/pull-request-details@1.2.0
-        id: pr_details
+      - name: PR Action
+        uses: anuraagkb/Test1@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ github.event.pull_request.number }}
+         
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
