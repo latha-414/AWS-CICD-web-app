@@ -67,19 +67,19 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Get Merged Pull Request Information action
+      # Get PR Details using Pull Request Details action
       - name: Get PR Details
-        uses: actions/get-merged-pull-request-information@v1
+        uses: tibordivis/pull-request-details@1.2.0
         id: pr_details
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          base_branch: main
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr_details.outputs.number }}](" ${{ steps.pr_details.outputs.html_url }} "): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.html_url }}): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
