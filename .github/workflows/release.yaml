@@ -29,11 +29,11 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
-      # Install GitHub CLI
-      - name: Install GitHub CLI
+      # Install GitHub CLI and jq
+      - name: Install GitHub CLI and jq
         run: |
           sudo apt-get update
-          sudo apt-get install -y gh
+          sudo apt-get install -y gh jq
 
       # Authenticate GitHub CLI
       - name: Authenticate GitHub CLI
@@ -64,13 +64,15 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get PR Details and append to the changelog
-
       - name: Get PR Details
         run: |
           pr_details=$(gh pr list --state merged --base pr-branch --json number,title,url)
-          echo "### PR Details" >> CHANGELOG.md
-          echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title' >> CHANGELOG.md
-
+          if [[ -n "$pr_details" ]]; then
+            echo "### PR Details" >> CHANGELOG.md
+            echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title' >> CHANGELOG.md
+          else
+            echo "No PR details found for the specified criteria." >> CHANGELOG.md
+          fi
 
       # Create GitHub Release
       - name: Create GitHub Release
