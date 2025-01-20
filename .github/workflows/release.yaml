@@ -62,7 +62,7 @@ jobs:
 
       # Debug PR Details Output
       - name: Debug PR Details
-        run: echo "PR Details: ${{ toJSON(steps.pr_details.outputs) }}"
+        run: echo "PR Details:${{ toJSON(steps.pr_details.outputs) }}"
 
       # Extract PR Author from Outputs
       - name: Extract PR Author
