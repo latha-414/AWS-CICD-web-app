@@ -1,3 +1,11 @@
+## [0.1.24](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.24-pr-branch.0...v0.1.24) (2025-01-20)
+
+
+
+## [0.1.24-pr-branch.0](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.23...v0.1.24-pr-branch.0) (2025-01-20)
+
+
+
 ## [0.1.23](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.23-pr-branch.0...v0.1.23) (2025-01-20)
 
 
@@ -7,14 +15,6 @@
 
 
 ## [0.1.22](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.22-pr-branch.0...v0.1.22) (2025-01-20)
-
-
-
-## [0.1.22-pr-branch.0](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.21...v0.1.22-pr-branch.0) (2025-01-20)
-
-
-
-## [0.1.21](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.21-pr-branch.0...v0.1.21) (2025-01-20)
 
 
 
