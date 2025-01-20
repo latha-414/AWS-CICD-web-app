@@ -1,4 +1,5 @@
-name: Tag and release
+name: Tag and Release
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,25 +9,35 @@ on:
         default: "patch"
         type: choice
         options:
-        - major
-        - minor
-        - patch
+          - major
+          - minor
+          - patch
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   create_release:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository
       - name: Checkout Repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: QM-508
+          ref: main
 
+      # Install GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+      # Authenticate GitHub CLI
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+      # Tag and Release
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
@@ -34,40 +45,36 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
-          
+
+      # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
+      # Generate Changelog
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: QM-508 
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: main
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Fetch Merged PRs
-        id: pr_details
-        uses: peter-evans/pull-request-link@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          base: QM-508
-          state: merged
-          output: pr_details
+      # Get PR Details and append to the changelog
 
+      - name: Get PR Details
+        run: |
+          pr_details=$(gh pr list --state merged --base pr-branch --json number,title,url)
+          echo "### PR Details" >> CHANGELOG.md
+          echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title' >> CHANGELOG.md
+      # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: |
-            Changelog:
-            ${{ steps.changelog.outputs.changelog }}
-            
-            Merged PRs:
-            ${{ steps.pr_details.outputs.pr_details }}
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
