@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
+          ref: main  # Use the main branch
 
       # Install GitHub CLI
       - name: Install GitHub CLI
@@ -63,23 +63,23 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: main  # Use the main branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Fetch list of Pull Request changed files action
+      # Get PR Details using Get Merged Pull Request Information action
       - name: Get PR Details
-        uses: MiguelDomingues/fetch-list-of-pull-request-changed-files@v1.0.3
+        uses: actions/get-merged-pull-request-information@v1
         id: pr_details
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ github.event.inputs.pr_number }}
+          base_branch: main
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr_details.outputs.number }}](${{ steps.pr_details.outputs.url }}): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](" ${{ steps.pr_details.outputs.html_url }} "): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
