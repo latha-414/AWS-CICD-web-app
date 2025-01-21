@@ -60,17 +60,21 @@ jobs:
           labels: '["closed"]'
           skip_hour: '24'
 
+      # Set PR details as environment variables
+      - name: Set PR Details
+        run: |
+          echo "PR_NUMBER=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].number')" >> $GITHUB_ENV
+          echo "PR_TITLE=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].title')" >> $GITHUB_ENV
+          echo "PR_URL=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].html_url')" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].user.login')" >> $GITHUB_ENV
+
       # Output PR Details
       - name: Output PR Details
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.pulls)[0].number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.pulls)[0].title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.pulls)[0].html_url }}"
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].user.login }}"
-          echo "PR Number: $PR_NUMBER"
-          echo "PR Title: $PR_TITLE"
-          echo "PR URL: $PR_URL"
-          echo "PR Author: $PR_AUTHOR"
+          echo "PR Number: ${{ env.PR_NUMBER }}"
+          echo "PR Title: ${{ env.PR_TITLE }}"
+          echo "PR URL: ${{ env.PR_URL }}"
+          echo "PR Author: ${{ env.PR_AUTHOR }}"
           
       # Create GitHub Release
       - name: Create GitHub Release
@@ -82,4 +86,4 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
