@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: QM-508
+          ref: pr-branch
 
       # Tag and Release
       - name: Tag and Release
@@ -48,13 +48,17 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: QM-508
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details
+      # Get Merged PR Details using get-all-pull-requests
       - name: Get Merged PR Details
-        uses: some-action-to-get-merged-pr-details
+        uses: rlespinasse/github-action-get-all-pull-requests@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-state: merged
+          base: main
 
       # Get Current PR Details using Get PR Action
       - name: Get Current PR Details
@@ -71,17 +75,17 @@ jobs:
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
-      # Append PR Details to the Changelog
+      # Append PR Details to Changelog
       - name: Append PR Details to Changelog
         run: |
           PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
           PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
           PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           PR_AUTHOR="${{ env.PR_AUTHOR }}"
-          
+
           echo "### Merged PR Details" >> CHANGELOG.md
-          echo "- Details of merged PRs go here" >> CHANGELOG.md
-          
+          cat ${{ steps.get_merged_pr_details.outputs.result }} >> CHANGELOG.md
+
           echo "### Current PR Details" >> CHANGELOG.md
           echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
