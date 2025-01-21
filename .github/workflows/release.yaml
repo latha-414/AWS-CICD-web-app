@@ -60,21 +60,13 @@ jobs:
           labels: '["closed"]'
           skip_hour: '24'
 
-      # Set PR details as environment variables
-      - name: Set PR Details
+      # Output PR Details
+      - name: Output PR Details
         run: |
-          echo "PR_NUMBER=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].number')" >> $GITHUB_ENV
-          echo "PR_TITLE=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].title')" >> $GITHUB_ENV
-          echo "PR_URL=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].html_url')" >> $GITHUB_ENV
-          echo "PR_AUTHOR=$(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].author')" >> $GITHUB_ENV
-
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
-        run: |
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ env.PR_NUMBER }}](${{ env.PR_URL }}): ${{ env.PR_TITLE }} by @${{ env.PR_AUTHOR }}" >> CHANGELOG.md
+          echo "PR Number: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].number')"
+          echo "PR Title: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].title')"
+          echo "PR URL: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].html_url')"
+          echo "PR Author: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].user.login')"
 
       # Create GitHub Release
       - name: Create GitHub Release
