@@ -29,27 +29,6 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
-      # Get PR Details using Get PR Action
-      - name: Get PR Details
-        id: pr_details
-        uses: cloudposse-github-actions/get-pr@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.number }}
-
-      # Extract PR Details
-      - name: Extract PR Details
-        id: extract_author
-        run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
-          echo "PR_NUMBER=${PR_NUMBER}" >> $GITHUB_ENV
-          echo "PR_TITLE=${PR_TITLE}" >> $GITHUB_ENV
-          echo "PR_URL=${PR_URL}" >> $GITHUB_ENV
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -73,12 +52,32 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+      # Get PR Details using Get PR Action
+      - name: Get PR Details
+        uses: cloudposse-github-actions/get-pr@main
+        id: pr_details
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          id: ${{ github.event.number }}
+
+      # Debug the PR Details
+      - name: Debug PR Details
+        run: |
+          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
+          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
+          echo "PR URL: ${{ steps.pr_details.outputs.url }}"
+          echo "PR Author: ${{ steps.pr_details.outputs.author }}"
+          echo "PR_AUTHOR=${{ steps.pr_details.outputs.author }}" >> $GITHUB_ENV
+
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          PR_NUMBER="${{ steps.pr_details.outputs.number }}"
+          PR_TITLE="${{ steps.pr_details.outputs.title }}"
+          PR_URL="${{ steps.pr_details.outputs.url }}"
+          PR_AUTHOR="${{ env.PR_AUTHOR }}"
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ env.PR_NUMBER }}](${{ env.PR_URL }}): ${{ env.PR_TITLE }} by @${{ env.PR_AUTHOR }}" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
