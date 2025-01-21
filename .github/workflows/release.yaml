@@ -62,15 +62,18 @@ jobs:
 
     
 
-      # Append PR Details to the changelog
+           # Append PR Details to Changelog
       - name: Append PR Details to Changelog
         run: |
           PR_NUMBER="${{ steps.pr_details.outputs.number }}"
           PR_TITLE="${{ steps.pr_details.outputs.title }}"
           PR_URL="${{ steps.pr_details.outputs.url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          PR_AUTHOR="${{ steps.pr_details.outputs.author }}"
+
+          # Appending PR details directly to the changelog
           echo "### PR Details" >> CHANGELOG.md
           echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
 
       # Create GitHub Release
       - name: Create GitHub Release
