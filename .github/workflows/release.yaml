@@ -55,8 +55,8 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get Merged PR Details using "Get Merged Pull Requests" Action
-      - name: Get Merged PR Details
-        uses: actions-ecosystem/action-get-merged-pull-requests@v2
+      - name: Actions Ecosystem Action Get Merged Pull Request
+        uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
