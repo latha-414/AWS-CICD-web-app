@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
+          ref: QM-508
 
       # Tag and Release
       - name: Tag and Release
@@ -48,18 +48,21 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: QM-508
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Get PR Action
-      - name: Get PR Details
+      # Get Merged PR Details
+      - name: Get Merged PR Details
+        uses: some-action-to-get-merged-pr-details
+
+      # Get Current PR Details using Get PR Action
+      - name: Get Current PR Details
         uses: cloudposse-github-actions/get-pr@main
         id: pr_details
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
-
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
@@ -67,7 +70,8 @@ jobs:
         run: |
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-      # Append PR Details to the changelog
+
+      # Append PR Details to the Changelog
       - name: Append PR Details to Changelog
         run: |
           PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
@@ -75,10 +79,12 @@ jobs:
           PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           PR_AUTHOR="${{ env.PR_AUTHOR }}"
           
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
+          echo "### Merged PR Details" >> CHANGELOG.md
+          echo "- Details of merged PRs go here" >> CHANGELOG.md
+          
+          echo "### Current PR Details" >> CHANGELOG.md
           echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
