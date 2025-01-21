@@ -1,6 +1,9 @@
 name: Tag and Release
 
 on:
+  push:
+    branches:
+      - main  # Set to your primary branch
   workflow_dispatch:
     inputs:
       release_type:
@@ -57,7 +60,7 @@ jobs:
         id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
+          base: main  # Set this to your main branch name
 
       # Output PR Details
       - name: Output PR Details
@@ -70,7 +73,7 @@ jobs:
           echo "PR Title: $PR_TITLE"
           echo "PR URL: $PR_URL"
           echo "PR Author: $PR_AUTHOR"
-          
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
