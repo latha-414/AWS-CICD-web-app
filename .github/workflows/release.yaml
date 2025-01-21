@@ -1,6 +1,9 @@
 name: Tag and Release
 
 on:
+  pull_request:
+    types:
+      - closed
   workflow_dispatch:
     inputs:
       release_type:
@@ -52,43 +55,26 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details using justinyoo/github-pr-merge-action
-      - name: Get Merged PR Details 
-        uses: repo-sync/pull-request@v2 
-        with: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          MERGE_METHOD: merge 
-          BASE: main 
-          HEAD: merged
-
-      # Get Current PR Details using Get PR Action
-      - name: Get Current PR Details
-        uses: cloudposse-github-actions/get-pr@main
+      # Get PR Details from the closed PR
+      - name: Get PR Details for Closed PR
         id: pr_details
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.number }}
-
-      # Extract PR Author from the PR Details output
-      - name: Extract PR Author
-        id: extract_author
         run: |
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
 
       # Append PR Details to Changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
-
-          echo "### Merged PR Details" >> CHANGELOG.md
-          cat ${{ steps.get_merged_pr_details.outputs.result }} >> CHANGELOG.md
-
-          echo "### Current PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#${{ env.PR_NUMBER }}](${{ env.PR_URL }}): ${{ env.PR_TITLE }} by @${{ env.PR_AUTHOR }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
