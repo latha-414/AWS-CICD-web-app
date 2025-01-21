@@ -60,14 +60,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Debug the PR Details
-      - name: Debug PR Details
-        run: |
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
-          echo "PR URL: ${{ steps.pr_details.outputs.url }}"
-          echo "PR Author: ${{ steps.pr_details.outputs.author }}"
-          echo "PR_AUTHOR=${{ steps.pr_details.outputs.author }}" >> $GITHUB_ENV
+    
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
