@@ -27,7 +27,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
 
       # Tag and Release
       - name: Tag and Release
@@ -58,7 +57,8 @@ jobs:
         id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          labels: 'closed'
+          labels: '["closed"]'
+          skip_hour: '24'
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
