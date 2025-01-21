@@ -1,9 +1,6 @@
 name: Tag and Release
 
 on:
-  pull_request:
-    types:
-      - closed
   workflow_dispatch:
     inputs:
       release_type:
@@ -55,34 +52,23 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Closed PR Details
-      - name: Get Closed PR Details
-        id: closed_pr_details
-        uses: cloudposse/github-actions-get-pr@main
+      # Get Merged PR Details
+      - name: Get Merged PR Details
+        uses: repo-sync/github-sync@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.pull_request.number }}  # Fetch the details of the closed PR
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+          SOURCE_BRANCH: main
+          BASE_BRANCH: closed
 
-      # Extract PR Author from the PR Details output
-      - name: Extract PR Author
-        id: extract_author
+      # Append Merged PR Details to Changelog
+      - name: Append Merged PR Details to Changelog
         run: |
-          PR_AUTHOR="${{ fromJSON(steps.closed_pr_details.outputs.json).user.login }}"
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+          echo "### Merged PR Details" >> CHANGELOG.md
+          for pr in ${{ steps.get_merged_pr_details.outputs.result }}; do
+            echo "- PR [#$pr.number]($pr.html_url): $pr.title by @$pr.user.login" >> CHANGELOG.md
+          done
 
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
-        run: |
-          PR_NUMBER="${{ fromJSON(steps.closed_pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.closed_pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.closed_pr_details.outputs.json).html_url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
-
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
-          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
