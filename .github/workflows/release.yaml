@@ -53,17 +53,13 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get Merged PR Details using justinyoo/github-pr-merge-action
-      - name: Get Merged PR Details
-        uses: justinyoo/github-pr-merge-action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.repository }}
-          issueId: ${{ github.event.number }}
-          mergeMethod: Merge
-          commitTitle: "Merge PR #${{ github.event.number }}"
-          commitDescription: "Merged PR #${{ github.event.number }}"
-          deleteBranch: true
+      - name: Get Merged PR Details 
+        uses: repo-sync/pull-request@v2 
+        with: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          MERGE_METHOD: merge 
+          BASE: main 
+          HEAD: merged
 
       # Get Current PR Details using Get PR Action
       - name: Get Current PR Details
