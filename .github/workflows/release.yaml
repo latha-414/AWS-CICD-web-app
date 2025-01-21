@@ -27,7 +27,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
 
       # Tag and Release
       - name: Tag and Release
@@ -52,25 +51,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Get PR Action
-      - name: Get PR Details
-        uses: cloudposse-github-actions/get-pr@main
+      # Get Closed PR Details using "Get Closed PRs" Action
+      - name: Get Closed PR Details
+        uses: rlespinasse/github-pull-request-action@v0.1.0
         id: pr_details
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.number }}
-
-          # Check if PR is merged
-      - name: Check if PR is Merged
-        id: check_merged
-        run: |
-          PR_STATE="${{ fromJSON(steps.pr_details.outputs.json).state }}"
-          PR_MERGED_AT="${{ fromJSON(steps.pr_details.outputs.json).merged_at }}"
-          
-          if [[ "$PR_STATE" != "closed" || -z "$PR_MERGED_AT" ]]; then
-            echo "This pull request is not merged."
-            exit 1
-          fi
+          pr-state: closed
+          sort: updated
+          direction: desc
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
@@ -84,8 +73,8 @@ jobs:
         run: |
           PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
           PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).html_url }}"
+          PR_AUTHOR="${PR_AUTHOR}"
           
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
