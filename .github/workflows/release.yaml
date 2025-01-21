@@ -60,19 +60,13 @@ jobs:
           labels: '["closed"]'
           skip_hour: '24'
 
-      # Extract PR Author from the PR Details output
-      - name: Extract PR Author
-        id: extract_author
-        run: |
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].author }}"
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
           PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.pulls)[0].number }}"
           PR_TITLE="${{ fromJSON(steps.pr_details.outputs.pulls)[0].title }}"
           PR_URL="${{ fromJSON(steps.pr_details.outputs.pulls)[0].html_url }}"
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].author }}"
           
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
