@@ -60,25 +60,25 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Debug the PR Details
-      - name: Debug PR Details
-        run: |
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
-          echo "PR URL: ${{ steps.pr_details.outputs.url }}"
-          echo "PR Author: ${{ steps.pr_details.outputs.author }}"
-          echo "PR_AUTHOR=${{ steps.pr_details.outputs.author }}" >> $GITHUB_ENV
 
+      # Extract PR Author from the PR Details output
+      - name: Extract PR Author
+        id: extract_author
+        run: |
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ steps.pr_details.outputs.number }}"
-          PR_TITLE="${{ steps.pr_details.outputs.title }}"
-          PR_URL="${{ steps.pr_details.outputs.url }}"
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
           echo "### PR Details" >> CHANGELOG.md
           echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
-
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
