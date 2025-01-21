@@ -62,13 +62,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           base: main  # Set this to your main branch name
 
-      # Extract PR Author from the PR Details output
-      - name: Extract PR Author
-        id: extract_author
-        run: |
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.prs)[0].user.login }}"
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-
+  
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
