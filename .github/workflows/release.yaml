@@ -55,28 +55,17 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get Merged PR Details using "Get Merged Pull Requests" Action
-      - name: Actions Ecosystem Action Get Merged Pull Request
+      - name: Get Merged PR Details
         uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         id: pr_details
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           base: main  # Set this to your main branch name
 
-     # Set PR Details as Environment Variables
-      - name: Set PR Details
-        run: |  
-          echo "PR_NUMBER=$(echo '${{ steps.pr_details.outputs.prs }}' | jq -r '.[0].number')" >> $GITHUB_ENV 
-          echo "PR_TITLE=$(echo '${{ steps.pr_details.outputs.prs }}' | jq -r '.[0].title')" >> $GITHUB_ENV 
-          echo "PR_URL=$(echo '${{ steps.pr_details.outputs.prs }}' | jq -r '.[0].html_url')" >> $GITHUB_ENV 
-          echo "PR_AUTHOR=$(echo '${{ steps.pr_details.outputs.prs }}' | jq -r '.[0].user.login')" >> $GITHUB_ENV 
-          
-    # Output PR Details
+      # Output PR Details
       - name: Output PR Details
-        run: | 
-          echo "PR Number: ${{ env.PR_NUMBER }}" 
-          echo "PR Title: ${{ env.PR_TITLE }}" 
-          echo "PR URL: ${{ env.PR_URL }}" 
-          echo "PR Author: ${{ env.PR_AUTHOR }}"
+        run: |
+          echo "Merged PRs: ${{ steps.pr_details.outputs.prs }}"
 
       # Create GitHub Release
       - name: Create GitHub Release
