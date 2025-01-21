@@ -54,11 +54,10 @@ jobs:
 
       # Get Merged PR Details using octokit/request-action
       - name: Get Merged PR Details
+        id: get_merged_prs
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/pulls
-          state: closed
-          per_page: 10
+          route: GET /repos/${{ github.repository }}/pulls?state=closed&base=main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -84,10 +83,12 @@ jobs:
           PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
           PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           PR_AUTHOR="${{ env.PR_AUTHOR }}"
-
+          
           echo "### Merged PR Details" >> CHANGELOG.md
-          echo ${{ steps.get_merged_pr_details.outputs.result }} >> CHANGELOG.md
-
+          for pr in ${{ steps.get_merged_prs.outputs.result }}; do
+            echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          done
+          
           echo "### Current PR Details" >> CHANGELOG.md
           echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
