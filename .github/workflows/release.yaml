@@ -54,11 +54,11 @@ jobs:
 
       # Get Merged PR Details using get-all-pull-requests
       - name: Get Merged PR Details 
-        uses: github-actions/get-pull-requests@v1 
+        uses: lemurheavy/merged-pr-action@v1
         with: 
           github-token: ${{ secrets.GITHUB_TOKEN }} 
-          state: merged 
-          base: main
+          base: main 
+          state: closed
 
       # Get Current PR Details using Get PR Action
       - name: Get Current PR Details
