@@ -1,20 +1,9 @@
-name: Tag and Release
+name: Tag, Release, and Fetch Merged PR Details
 
 on:
   push:
     branches:
-      - main  # Set to your primary branch
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
+      - main  # Replace with your default branch name, e.g., 'main' or 'master'
 
 permissions:
   contents: write
@@ -31,13 +20,29 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Fetch merged PR details (only runs when a PR is merged to the main branch)
+      - name: Get Merged Pull Request Details
+        uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
+        id: pr_details
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Display PR Details (optional, for logging purposes)
+      - name: Display PR Details
+        run: |
+          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
+          echo "PR Body: ${{ steps.pr_details.outputs.body }}"
+          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
+          echo "PR Labels: ${{ steps.pr_details.outputs.labels }}"
+          echo "PR Assignees: ${{ steps.pr_details.outputs.assignees }}"
+
       # Tag and Release
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.release_type }}
+          default_bump: patch  # Or use ${{ github.event.inputs.release_type }} for dynamic bump
           tag_prefix: v
 
       # Export the new tag
@@ -50,30 +55,18 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: pr-branch  # Replace with the branch to generate changelog from
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details using "Get Merged Pull Requests" Action
-      - name: Get Merged PR Details
-        uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
-        id: pr_details
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          base: main  # Set this to your main branch name
-
-  
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
+      # Append Merged PR Details to Changelog
+      - name: Append Merged PR Details to Changelog
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.prs)[0].number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.prs)[0].title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.prs)[0].html_url }}"
-          
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          echo -e "\n### Merged PR: ${{ steps.pr_details.outputs.number }}" >> CHANGELOG.md
+          echo -e "Title: ${{ steps.pr_details.outputs.title }}" >> CHANGELOG.md
+          echo -e "Body: ${{ steps.pr_details.outputs.body }}" >> CHANGELOG.md
+          echo -e "Labels: ${{ steps.pr_details.outputs.labels }}" >> CHANGELOG.md
+          echo -e "Assignees: ${{ steps.pr_details.outputs.assignees }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
