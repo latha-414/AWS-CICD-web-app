@@ -1,4 +1,4 @@
-## [0.1.58](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.58-pr-branch.0...v0.1.58) (2025-01-21)
+## [0.1.59](https://github.com/latha-414/AWS-CICD-web-app/compare/v0.1.58-pr-branch.0...v0.1.59) (2025-01-21)
 
 
 
