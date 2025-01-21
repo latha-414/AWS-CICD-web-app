@@ -52,14 +52,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details using repo-sync/pull-request
+      # Get Merged PR Details using PeterLazaridis/github-prs-list-action
       - name: Get Merged PR Details
-        uses: repo-sync/pull-request@v2
+        uses: PeterLazaridis/github-prs-list-action@v1.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: merge
-          BASE: main
-          STATE: closed
+          token: ${{ secrets.GITHUB_TOKEN }}
+          state: merged
+          base: main
+          sort: created
+          direction: desc
 
       # Get Current PR Details using Get PR Action
       - name: Get Current PR Details
