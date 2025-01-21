@@ -52,22 +52,19 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details
+      # Get Merged PR Details using get-merged-pull-request-information
       - name: Get Merged PR Details
-        uses: repo-sync/github-sync@v1
+        uses: bcgov-nr/get-merged-pull-request-information@v1.0.0
+        id: get_merged_prs
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SOURCE_REPOSITORY: ${{ github.repository }}
-          SOURCE_BRANCH: main
-          BASE_BRANCH: closed
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          base_branch: main
 
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
           echo "### Merged PR Details" >> CHANGELOG.md
-          for pr in ${{ steps.get_merged_pr_details.outputs.result }}; do
-            echo "- PR [#$pr.number]($pr.html_url): $pr.title by @$pr.user.login" >> CHANGELOG.md
-          done
+          echo "- PR [#${{ steps.get_merged_prs.outputs.number }}](${{ steps.get_merged_prs.outputs.html_url }}): ${{ steps.get_merged_prs.outputs.title }} by @${{ steps.get_merged_prs.outputs.user_login }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
