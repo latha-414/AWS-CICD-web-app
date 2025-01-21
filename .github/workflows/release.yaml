@@ -59,7 +59,7 @@ jobs:
         uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         id: pr_details
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           base: main  # Set this to your main branch name
 
       # Output PR Details
