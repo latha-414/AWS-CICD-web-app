@@ -47,34 +47,30 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: main
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Closed PR Details using "Get Closed PRs" Action
-      - name: Get Closed PR Details
-        uses: rlespinasse/github-pull-request-action@v0.1.0
+      # Get PR Details using "List Pull Requests" Action
+      - name: Get PR Details
+        uses: int128/github-action-pull-request@v2.0.1
         id: pr_details
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-state: closed
-          sort: updated
-          direction: desc
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
         id: extract_author
         run: |
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
+          PR_AUTHOR="$(jq -r '.[] | select(.state=="closed") | .user.login' <<< "${{ steps.pr_details.outputs.json }}")"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).html_url }}"
-          PR_AUTHOR="${PR_AUTHOR}"
+          PR_NUMBER="$(jq -r '.[] | select(.state=="closed") | .number' <<< "${{ steps.pr_details.outputs.json }}")"
+          PR_TITLE="$(jq -r '.[] | select(.state=="closed") | .title' <<< "${{ steps.pr_details.outputs.json }}")"
+          PR_URL="$(jq -r '.[] | select(.state=="closed") | .html_url' <<< "${{ steps.pr_details.outputs.json }}")"
           
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
