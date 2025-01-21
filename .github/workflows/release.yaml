@@ -54,12 +54,17 @@ jobs:
 
       # Get Merged PR Details using get-all-pull-requests
       - name: Get Merged PR Details 
-        uses: lemurheavy/merged-pr-action@v1
+        uses: justinyoo/github-pr-merge-action@v1 
         with: 
           github-token: ${{ secrets.GITHUB_TOKEN }} 
-          base: main 
-          state: closed
-
+          owner: ${{ github.repository_owner }} 
+          repo: ${{ github.repository }} 
+          issueId: ${{ github.event.number }} 
+          mergeMethod: Merge 
+          commitTitle: "Merge PR #${{ github.event.number }}" 
+          commitDescription: "Merged PR #${{ github.event.number }}" 
+          deleteBranch: true
+          
       # Get Current PR Details using Get PR Action
       - name: Get Current PR Details
         uses: cloudposse-github-actions/get-pr@main
