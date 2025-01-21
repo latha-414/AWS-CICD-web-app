@@ -27,9 +27,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: QM-508
 
-    # Tag and Release
+      # Tag and Release
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
@@ -48,30 +47,30 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: QM-508
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # List Closed PRs with Details based on label
-      - name: List Closed Pull Requests
-        id: list_prs
-        uses: buildsville/list-pull-requests@v1
+      # Get Merged PR Details using "Get Merged Pull Requests" Action
+      - name: Get Merged PR Details
+        uses: actions-ecosystem/action-get-merged-pull-requests@v2
+        id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          state: 'closed'
-          labels: '["WFR"]' # Example label filter
+          base: main
 
-      # Debug the PRs Retrieved
-      - name: Debug PRs Retrieved
-        run: echo "PRs Retrieved:${{ steps.list_prs.outputs.pull_requests }}"
-
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
+      # Output PR Details
+      - name: Output PR Details
         run: |
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "${{ steps.list_prs.outputs.pull_requests }}" | jq -r '.[] | "- PR [#\(.number)](\(.url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
-
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.prs)[0].number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.prs)[0].title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.prs)[0].html_url }}"
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.prs)[0].user.login }}"
+          echo "PR Number: $PR_NUMBER"
+          echo "PR Title: $PR_TITLE"
+          echo "PR URL: $PR_URL"
+          echo "PR Author: $PR_AUTHOR"
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
