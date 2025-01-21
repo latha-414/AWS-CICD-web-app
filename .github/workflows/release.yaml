@@ -60,11 +60,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           id: ${{ github.event.number }}
 
-      # Check if PR is merged
+          # Check if PR is merged
       - name: Check if PR is Merged
         id: check_merged
         run: |
-          if [[ "${{ fromJSON(steps.pr_details.outputs.json).state }}" != "closed" || "${{ fromJSON(steps.pr_details.outputs.json).merged_at }}" == "null" ]]; then
+          PR_STATE="${{ fromJSON(steps.pr_details.outputs.json).state }}"
+          PR_MERGED_AT="${{ fromJSON(steps.pr_details.outputs.json).merged_at }}"
+          
+          if [[ "$PR_STATE" != "closed" || -z "$PR_MERGED_AT" ]]; then
             echo "This pull request is not merged."
             exit 1
           fi
