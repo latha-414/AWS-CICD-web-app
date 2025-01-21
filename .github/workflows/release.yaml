@@ -62,10 +62,24 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           base: main  # Set this to your main branch name
 
-      # Output PR Details
-      - name: Output PR Details
+      # Extract PR Author from the PR Details output
+      - name: Extract PR Author
+        id: extract_author
         run: |
-          echo "Merged PRs: ${{ steps.pr_details.outputs.prs }}"
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.prs)[0].user.login }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+
+      # Append PR Details to the changelog
+      - name: Append PR Details to Changelog
+        run: |
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.prs)[0].number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.prs)[0].title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.prs)[0].html_url }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
