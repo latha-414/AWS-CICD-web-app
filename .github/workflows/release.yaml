@@ -63,11 +63,15 @@ jobs:
       # Output PR Details
       - name: Output PR Details
         run: |
-          echo "PR Number: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].number')"
-          echo "PR Title: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].title')"
-          echo "PR URL: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].html_url')"
-          echo "PR Author: $(echo '${{ steps.pr_details.outputs.pulls }}' | jq -r '.[0].user.login')"
-
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.pulls)[0].number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.pulls)[0].title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.pulls)[0].html_url }}"
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].user.login }}"
+          echo "PR Number: $PR_NUMBER"
+          echo "PR Title: $PR_TITLE"
+          echo "PR URL: $PR_URL"
+          echo "PR Author: $PR_AUTHOR"
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
