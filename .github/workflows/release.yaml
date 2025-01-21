@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: QM-508
+          ref: pr-branch
 
       # Tag and Release
       - name: Tag and Release
@@ -51,7 +51,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: QM-508
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
