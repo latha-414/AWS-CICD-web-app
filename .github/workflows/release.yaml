@@ -51,26 +51,27 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using "List Pull Requests" Action
-      - name: Get PR Details
-        uses: int128/github-action-pull-request@v2.0.1
+      # Get Closed PR Details using "List Pull Requests" Action
+      - name: Get Closed PR Details
+        uses: buildsville/list-pull-requests@v1
         id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          labels: 'closed'
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
         id: extract_author
         run: |
-          PR_AUTHOR="$(jq -r '.[] | select(.state=="closed") | .user.login' <<< "${{ steps.pr_details.outputs.json }}")"
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].author }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="$(jq -r '.[] | select(.state=="closed") | .number' <<< "${{ steps.pr_details.outputs.json }}")"
-          PR_TITLE="$(jq -r '.[] | select(.state=="closed") | .title' <<< "${{ steps.pr_details.outputs.json }}")"
-          PR_URL="$(jq -r '.[] | select(.state=="closed") | .html_url' <<< "${{ steps.pr_details.outputs.json }}")"
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.pulls)[0].number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.pulls)[0].title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.pulls)[0].html_url }}"
           
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
