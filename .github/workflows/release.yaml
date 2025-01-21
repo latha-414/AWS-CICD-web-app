@@ -27,11 +27,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: QM-508
 
       # Tag and Release
       - name: Tag and Release
         id: tag_release
-        uses: mathieudutour/github-tag-action@v6.2
+        uses: mathieudour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
@@ -47,31 +48,30 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: QM-508
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Closed PR Details using "List Pull Requests" Action
-      - name: Get Closed PR Details
+      # List Closed PRs with Details based on label
+      - name: List Closed Pull Requests
+        id: list_prs
         uses: buildsville/list-pull-requests@v1
-        id: pr_details
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          labels: '["closed"]'
-          skip_hour: '24'
+          state: 'closed'
+          labels: '["WFR"]' # Example label filter
 
-      # Output PR Details
-      - name: Output PR Details
+      # Debug the PRs Retrieved
+      - name: Debug PRs Retrieved
+        run: echo "PRs Retrieved:${{ steps.list_prs.outputs.pull_requests }}"
+
+      # Append PR Details to Changelog
+      - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.pulls)[0].number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.pulls)[0].title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.pulls)[0].html_url }}"
-          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.pulls)[0].user.login }}"
-          echo "PR Number: $PR_NUMBER"
-          echo "PR Title: $PR_TITLE"
-          echo "PR URL: $PR_URL"
-          echo "PR Author: $PR_AUTHOR"
-          
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "${{ steps.list_prs.outputs.pull_requests }}" | jq -r '.[] | "- PR [#\(.number)](\(.url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
