@@ -59,8 +59,7 @@ jobs:
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           owner: ${{ github.repository_owner }}
-          repository: ${{ github.event.repository.name }}
-          issueId: ${{ github.event.pull_request.number }} 
+          repository: ${{ github.event.repository.name }} 
           mergeMethod: Merge  # Ensure proper capitalization
           deleteBranch: false
 
