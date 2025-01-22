@@ -63,12 +63,9 @@ jobs:
 
       # Extract and Format PR Details
       - name: Format PR Details
-        id: format_pr_details
         run: |
-          for pr in ${{ steps.pr_details.outputs.pull_requests }}
-          do
-            echo "- PR [#${{ pr.number }}](${{ pr.html_url }}): ${{ pr.title }} by @${{ pr.user.login }}" >> pr_details.txt
-          done
+          echo "${{ steps.pr_details.outputs.pull_requests }}" > pr_details.json
+          jq -r '.[] | "- PR [#\(.number)](\(.html_url)): \(.title) by @\(.user.login)"' pr_details.json > pr_details.txt
           cat pr_details.txt
           echo "PR_DETAILS=$(cat pr_details.txt)" >> $GITHUB_ENV
 
