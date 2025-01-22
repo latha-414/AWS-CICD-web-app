@@ -66,7 +66,7 @@ jobs:
         run: |
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-    
+
       # Fetch Closed PRs
       - name: Fetch Closed PRs
         id: fetch_closed_prs
@@ -79,7 +79,7 @@ jobs:
       - name: Append Closed PR Details to Changelog
         run: |
           echo "### Closed PRs" >> CHANGELOG.md
-          for pr in $(echo "${{ env.CLOSED_PRS }}" | jq -c '.[]'); do
+          echo "${{ env.CLOSED_PRS }}" | jq -c '.[]' | while read -r pr; do
             PR_NUMBER=$(echo "$pr" | jq -r '.number')
             PR_TITLE=$(echo "$pr" | jq -r '.title')
             PR_URL=$(echo "$pr" | jq -r '.html_url')
