@@ -22,10 +22,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Install GitHub CLI
-      - name: Install GitHub CLI
-        run: sudo apt install gh -y
-
       # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -55,12 +51,16 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Fetch Merged PRs
+      # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
         id: fetch_merged_prs
-        run: |
-          MERGED_PRS=$(gh pr list --state merged --json number,title,url,author --jq '.[] | "- PR #\(.number): \(.title) by @\(.author.login)"')
-          echo "MERGED_PRS=$MERGED_PRS" >> $GITHUB_ENV
+        uses: octokit/request-action@v2
+        with:
+          route: GET /repos/{owner}/{repo}/pulls
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          state: closed
+          base: main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -68,7 +68,7 @@ jobs:
       - name: Append Merged PR Details to Changelog
         run: |
           echo "### Merged PRs" >> CHANGELOG.md
-          echo "${{ env.MERGED_PRS }}" >> CHANGELOG.md
+          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
