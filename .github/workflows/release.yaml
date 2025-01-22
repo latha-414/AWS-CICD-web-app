@@ -53,9 +53,10 @@ jobs:
 
       - name: Truncate Changelog
         run: |
+          original_length=$(wc -c < CHANGELOG.md)
           head -c 124900 CHANGELOG.md > TRUNCATED_CHANGELOG.md
-          echo "\n...Truncated due to length limitations." >> TRUNCATED_CHANGELOG.md
-
+          truncated_length=$(wc -c < TRUNCATED_CHANGELOG.md)
+          echo "\n...Truncated due to length limitations. (Original length: $original_length characters, Truncated length: $truncated_length characters)" >> TRUNCATED_CHANGELOG.md
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
