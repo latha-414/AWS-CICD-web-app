@@ -41,7 +41,7 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Generate Changelog
+      # Generate Changelog using Conventional Changelog Action
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
@@ -50,12 +50,6 @@ jobs:
           git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      # Truncate Changelog
-      - name: Truncate Changelog
-        run: |
-          head -c 124900 CHANGELOG.md > TRUNCATED_CHANGELOG.md
-          echo "\n...Truncated due to length limitations." >> TRUNCATED_CHANGELOG.md
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
@@ -73,8 +67,20 @@ jobs:
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
-          echo "### Merged PRs" >> TRUNCATED_CHANGELOG.md
-          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> TRUNCATED_CHANGELOG.md
+          echo "### Merged PRs" >> CHANGELOG.md
+          merged_prs=$(echo "${{ steps.fetch_merged_prs.outputs.data }}" | jq -r '.[] | "- [#\(.number)](\(.html_url)): \(.title)"')
+          echo "$merged_prs" >> CHANGELOG.md
+
+      # Truncate Changelog if it exceeds 125,000 characters
+      - name: Truncate Changelog if too large
+        run: |
+          changelog_size=$(wc -c <CHANGELOG.md)
+          if [ "$changelog_size" -gt 125000 ]; then
+            head -c 124900 CHANGELOG.md > TRUNCATED_CHANGELOG.md
+            echo "\n...Truncated due to length limitations." >> TRUNCATED_CHANGELOG.md
+          else
+            cp CHANGELOG.md TRUNCATED_CHANGELOG.md
+          fi
 
       # Create GitHub Release
       - name: Create GitHub Release
