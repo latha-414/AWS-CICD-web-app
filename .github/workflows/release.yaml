@@ -52,27 +52,34 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Get Merged PR Action
-      - name: Auto Pull Request Creator
-        uses: changcheng967/AutoPullBot@v1.5
-        id: pr_details
+      # Fetch merged pull request details
+      - name: Get Merged Pull Request Details
+        id: get-merged-pr
+        uses: softprops/merge-pr@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ github.event.pull_request.number }}  # Automatically using the PR number from the event
-          
-      # Extract PR Details and Append to Changelog
-      - name: Append PR Details to Changelog
-        run: |
-          PR_NUMBER="${{ steps.pr_details.outputs.number }}"
-          PR_TITLE="${{ steps.pr_details.outputs.title }}"
-          PR_BODY="${{ steps.pr_details.outputs.body }}"
-          PR_URL="${{ steps.pr_details.outputs.url }}"
-          PR_AUTHOR="${{ steps.pr_details.outputs.user }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+      # Extract details from the action output and set them as environment variables
+      - name: Set PR Details as Environment Variables
+        run: |
+          echo "PR_NUMBER=${{ steps.get-merged-pr.outputs.pr_number }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ steps.get-merged-pr.outputs.pr_title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ steps.get-merged-pr.outputs.pr_body }}" >> $GITHUB_ENV
+
+      # Debug Output to see PR details
+      - name: Debug Merged PR Details
+        run: |
+          echo "PR Number: ${{ env.PR_NUMBER }}"
+          echo "PR Title: ${{ env.PR_TITLE }}"
+          echo "PR Body: ${{ env.PR_BODY }}"
+
+      # Append Merged PR Details to Changelog
+      - name: Append Merged PR Details to Changelog
+        run: |
+          echo -e "\n## Merged Pull Request Details:" >> CHANGELOG.md
+          echo "Number: ${{ env.PR_NUMBER }}" >> CHANGELOG.md
+          echo "Title: ${{ env.PR_TITLE }}" >> CHANGELOG.md
+          echo "Body: ${{ env.PR_BODY }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
