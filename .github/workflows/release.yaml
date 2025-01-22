@@ -56,8 +56,8 @@ jobs:
       - name: Get Closed PRs
         id: closed_prs
         run: |
-          closed_prs=$(gh pr list --state closed --json number,title,author,mergedAt --jq '.[] | select(.mergedAt != null) | {number, title, author: .author.login, url: .url}')
-          echo "CLOSED_PRS=$closed_prs" >> $GITHUB_ENV
+          CLOSED_PRS=$(gh pr list --state closed --json number,title,author,mergedAt,url --jq '.[] | select(.mergedAt != null) | {number, title, author: .author.login, url}')
+          echo "CLOSED_PRS=$CLOSED_PRS" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -66,11 +66,11 @@ jobs:
         id: extract_pr_details
         run: |
           CLOSED_PRS="${{ env.CLOSED_PRS }}"
-          echo $CLOSED_PRS | jq -c '.[]' | while IFS='' read -r pr; do
-            PR_NUMBER=$(echo $pr | jq -r '.number')
-            PR_TITLE=$(echo $pr | jq -r '.title')
-            PR_AUTHOR=$(echo $pr | jq -r '.author')
-            PR_URL=$(echo $pr | jq -r '.url')
+          echo "$CLOSED_PRS" | jq -c '.[]' | while IFS= read -r pr; do
+            PR_NUMBER=$(echo "$pr" | jq -r '.number')
+            PR_TITLE=$(echo "$pr" | jq -r '.title')
+            PR_AUTHOR=$(echo "$pr" | jq -r '.author')
+            PR_URL=$(echo "$pr" | jq -r '.url')
             echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
           done
 
