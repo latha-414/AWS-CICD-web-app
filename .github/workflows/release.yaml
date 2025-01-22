@@ -51,6 +51,11 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+      # Truncate the Changelog if too long
+      - name: Truncate Changelog
+        run: |
+          head -c 125000 CHANGELOG.md > TRUNCATED_CHANGELOG.md
+
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
         uses: octokit/request-action@v2.4.0
@@ -64,12 +69,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
-          echo "### Merged PRs" >> CHANGELOG.md
-          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> CHANGELOG.md
+          echo "### Merged PRs" >> TRUNCATED_CHANGELOG.md
+          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> TRUNCATED_CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
@@ -77,7 +81,7 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body_path: CHANGELOG.md
+          body_path: TRUNCATED_CHANGELOG.md
           draft: false
           prerelease: false
         env:
