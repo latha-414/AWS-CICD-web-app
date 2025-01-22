@@ -29,6 +29,13 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
+      # Fetch merged pull request details
+      - name: Get Merged Pull Request Details
+        id: get-merged-pull-request
+        uses: actions-ecosystem/action-get-merged-pull-request@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -52,37 +59,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Merge Details using justinyoo/github-pr-merge-action
-      - name: Get PR Merge Details
-        id: fetchDetails
-        uses: justinyoo/github-pr-merge-action@v1
-        with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
-          owner: ${{ github.repository_owner }}
-          repository: ${{ github.event.repository.name }} 
-          issueId: '1'
-          mergeMethod: Merge  # Ensure proper capitalization
-          deleteBranch: false
-
-      # Extract PR Author from the PR Merge Details output
-      - name: Extract PR Author
-        id: extract_author
+      # Append merged PR details to changelog
+      - name: Append Merged PR Details to Changelog
         run: |
-          PR_AUTHOR="${{ steps.fetchDetails.outputs.author }}"
-          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
-        run: |
-          PR_NUMBER="${{ steps.fetchDetails.outputs.pull-request-number }}"
-          PR_TITLE="${{ steps.fetchDetails.outputs.pull-request-title }}"
-          PR_URL="${{ steps.fetchDetails.outputs.pull-request-url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
-          
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          echo -e "\n## Merged Pull Request Details:" >> CHANGELOG.md
+          echo "- **Number**: ${{ steps.get-merged-pull-request.outputs.number }}" >> CHANGELOG.md
+          echo "- **Title**: ${{ steps.get-merged-pull-request.outputs.title }}" >> CHANGELOG.md
+          echo "- **Body**: ${{ steps.get-merged-pull-request.outputs.body }}" >> CHANGELOG.md
+          echo "- **Labels**: ${{ steps.get-merged-pull-request.outputs.labels }}" >> CHANGELOG.md
+          echo "- **Assignees**: ${{ steps.get-merged-pull-request.outputs.assignees }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
