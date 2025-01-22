@@ -66,13 +66,13 @@ jobs:
         run: |
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
-
+    
       # Fetch Closed PRs
       - name: Fetch Closed PRs
         id: fetch_closed_prs
         run: |
           CLOSED_PRS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed")
+            "https://api.github.com/repos/latha-414/AWS-CICD-web-app/pulls?state=closed")
           echo "CLOSED_PRS=${CLOSED_PRS}" >> $GITHUB_ENV
 
       # Append Closed PR Details to Changelog
