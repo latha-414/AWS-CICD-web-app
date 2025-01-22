@@ -66,12 +66,11 @@ jobs:
         run: |
           if [ "${{ steps.closed_prs.outputs.found }}" = "true" ]; then
             echo "### PR Details" >> CHANGELOG.md
-            for pr in ${{ steps.closed_prs.outputs.json }}; do
-              echo "- PR [#${pr.number}](${pr.html_url}): ${pr.title} by @${pr.user.login}" >> CHANGELOG.md
-            done
+            echo "${{ steps.closed_prs.outputs.json }}" | jq -r '.[] | "- PR [#\(.number)](\(.html_url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
           else
             echo "No PRs found" >> CHANGELOG.md
           fi
+
 
       # Create GitHub Release
       - name: Create GitHub Release
