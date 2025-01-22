@@ -61,15 +61,24 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Append merged PR details to changelog
-      - name: Append Merged PR Details to Changelog
+    # Extract PR Author from the PR Details output
+      - name: Extract PR Author
+        id: extract_author
         run: |
-          echo -e "\n## Merged Pull Request Details:" >> CHANGELOG.md
-          echo "- **Number**: ${{ steps.get-merged-pull-request.outputs.number }}" >> CHANGELOG.md
-          echo "- **Title**: ${{ steps.get-merged-pull-request.outputs.title }}" >> CHANGELOG.md
-          echo "- **Body**: ${{ steps.get-merged-pull-request.outputs.body }}" >> CHANGELOG.md
-          echo "- **Labels**: ${{ steps.get-merged-pull-request.outputs.labels }}" >> CHANGELOG.md
-          echo "- **Assignees**: ${{ steps.get-merged-pull-request.outputs.assignees }}" >> CHANGELOG.md
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+      # Append PR Details to the changelog
+      - name: Append PR Details to Changelog
+        run: |
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
+          PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
