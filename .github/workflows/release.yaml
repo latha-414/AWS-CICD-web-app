@@ -55,16 +55,16 @@ jobs:
       # Fetch merged pull request details
       - name: Get Merged Pull Request Details
         id: get-merged-pr
-        uses: softprops/merge-pr@v1
+        uses: benlei/find-merged-pull-request@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract details from the action output and set them as environment variables
       - name: Set PR Details as Environment Variables
         run: |
-          echo "PR_NUMBER=${{ steps.get-merged-pr.outputs.pr_number }}" >> $GITHUB_ENV
-          echo "PR_TITLE=${{ steps.get-merged-pr.outputs.pr_title }}" >> $GITHUB_ENV
-          echo "PR_BODY=${{ steps.get-merged-pr.outputs.pr_body }}" >> $GITHUB_ENV
+          echo "PR_NUMBER=${{ steps.get-merged-pr.outputs.number }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ steps.get-merged-pr.outputs.title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ steps.get-merged-pr.outputs.body }}" >> $GITHUB_ENV
 
       # Debug Output to see PR details
       - name: Debug Merged PR Details
