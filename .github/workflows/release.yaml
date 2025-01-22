@@ -59,6 +59,14 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Add Debug Output
+      - name: Debug PR Details
+        run: |
+          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
+          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
+          echo "PR URL: ${{ steps.pr_details.outputs.html_url }}"
+          echo "PR Author: ${{ steps.pr_details.outputs.user.login }}"
+
       # Extract and Format PR Details without JSON parsing
       - name: Format PR Details
         id: format_pr_details
