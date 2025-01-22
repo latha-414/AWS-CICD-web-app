@@ -69,6 +69,7 @@ jobs:
       - name: Extract PR Details
         id: extract_pr_details
         run: |
+          echo "### PR Details" >> CHANGELOG.md
           echo "${{ env.CLOSED_PRS }}" | jq -c '.[]' | while IFS= read -r pr; do
             PR_NUMBER=$(echo "$pr" | jq -r '.number')
             PR_TITLE=$(echo "$pr" | jq -r '.title')
@@ -76,13 +77,6 @@ jobs:
             PR_URL=$(echo "$pr" | jq -r '.url')
             echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
           done
-
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
-        run: |
-          echo "Release ${{ env.NEW_TAG }}" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          cat CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
