@@ -52,33 +52,33 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get PR Details using Get Merged PR Action
-      - name: Get PR Details
+      # Get Closed PR Details using Get PR Action
+      - name: Get Closed PR Details
         id: pr_details
-        uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
+        uses: cloudposse-github-actions/get-pr@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          id: ${{ github.event.number }}
+          state: closed
 
-      # Add Debug Output
-      - name: Debug PR Details
-        run: |
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "PR Title: ${{ steps.pr_details.outputs.title }}"
-          echo "PR URL: ${{ steps.pr_details.outputs.html_url }}"
-          echo "PR Author: ${{ steps.pr_details.outputs.user.login }}"
+      # Check if any PR details were found
+      - name: Check for PR Details
+        if: steps.pr_details.outputs.count == 0
+        run: echo "No closed PR details found."
 
-      # Extract and Format PR Details without JSON parsing
+      # Extract and Format PR Details
       - name: Format PR Details
         id: format_pr_details
+        if: steps.pr_details.outputs.count != 0
         run: |
           PR_NUMBER="${{ steps.pr_details.outputs.number }}"
           PR_TITLE="${{ steps.pr_details.outputs.title }}"
-          PR_URL="${{ steps.pr_details.outputs.html_url }}"
-          PR_AUTHOR="${{ steps.pr_details.outputs.user.login }}"
+          PR_URL="${{ steps.pr_details.outputs.url }}"
+          PR_AUTHOR="${{ steps.pr_details.outputs.author }}"
           echo "PR_DETAILS=- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> $GITHUB_ENV
 
       # Append PR Details to Changelog
       - name: Append PR Details to Changelog
+        if: steps.pr_details.outputs.count != 0
         run: |
           echo "### Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
           echo "### PR Details" >> CHANGELOG.md
