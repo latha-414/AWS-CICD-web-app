@@ -62,15 +62,25 @@ jobs:
           base: main
         id: closed_prs
 
+      # Install jq (if it's not already installed on the runner)
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      # Append PR Details to Changelog
       - name: Append PR Details to Changelog
         run: |
           if [ "${{ steps.closed_prs.outputs.found }}" = "true" ]; then
             echo "### PR Details" >> CHANGELOG.md
-            echo "${{ steps.closed_prs.outputs.json }}" | jq -r '.[] | "- PR [#\(.number)](\(.html_url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
+            
+            # Ensure JSON data is valid
+            if echo "${{ steps.closed_prs.outputs.json }}" | jq empty; then
+              echo "${{ steps.closed_prs.outputs.json }}" | jq -r '.[] | "- PR [#\(.number)](\(.html_url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
+            else
+              echo "Invalid JSON format" >> CHANGELOG.md
+            fi
           else
             echo "No PRs found" >> CHANGELOG.md
           fi
-
 
       # Create GitHub Release
       - name: Create GitHub Release
