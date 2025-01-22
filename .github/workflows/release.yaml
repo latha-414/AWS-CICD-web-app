@@ -52,14 +52,13 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Merged PR Details using Get PR Action
-      - name: Get Merged PR Details
+      # Get PR Details using Get PR Action
+      - name: Get PR Details
         uses: cloudposse-github-actions/get-pr@main
         id: pr_details
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          state: merged # Specify to get merged PRs
-          branch: pr-branch
+          id: ${{ github.event.number }}
 
       # Extract PR Author from the PR Details output
       - name: Extract PR Author
@@ -68,18 +67,25 @@ jobs:
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
 
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
+      # Fetch Closed PRs
+      - name: Fetch Closed PRs
+        id: fetch_closed_prs
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
-          PR_AUTHOR="${{ env.PR_AUTHOR }}"
-          
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          CLOSED_PRS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed")
+          echo "CLOSED_PRS=${CLOSED_PRS}" >> $GITHUB_ENV
+
+      # Append Closed PR Details to Changelog
+      - name: Append Closed PR Details to Changelog
+        run: |
+          echo "### Closed PRs" >> CHANGELOG.md
+          for pr in $(echo "${{ env.CLOSED_PRS }}" | jq -c '.[]'); do
+            PR_NUMBER=$(echo "$pr" | jq -r '.number')
+            PR_TITLE=$(echo "$pr" | jq -r '.title')
+            PR_URL=$(echo "$pr" | jq -r '.html_url')
+            PR_AUTHOR=$(echo "$pr" | jq -r '.user.login')
+            echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          done
 
       # Create GitHub Release
       - name: Create GitHub Release
