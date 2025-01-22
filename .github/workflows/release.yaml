@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: pr-branch
 
       # Tag and Release
       - name: Tag and Release
@@ -51,22 +52,37 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Fetch Merged PRs using bcgov/action-get-pr
-      - name: Get PR Number
-        uses: bcgov/action-get-pr@v0.0.1
-        id: vars
+      # Get PR Merge Details using justinyoo/github-pr-merge-action
+      - name: Get PR Merge Details
+        id: fetchDetails
+        uses: justinyoo/github-pr-merge-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          issueId: ${{ github.event.number }}
+          mergeMethod: Merge  # Ensure proper capitalization
+          deleteBranch: false
 
-      # Echo PR number
-      - name: Echo PR number
-        run: echo "PR:${{ steps.vars.outputs.pr }}"
-
-      # Append Merged PR Details to Changelog
-      - name: Append Merged PR Details to Changelog
+      # Extract PR Author from the PR Merge Details output
+      - name: Extract PR Author
+        id: extract_author
         run: |
-          echo "### Merged PRs" >> CHANGELOG.md
-          echo "PR: ${{ steps.vars.outputs.pr }}" >> CHANGELOG.md
+          PR_AUTHOR="${{ steps.fetchDetails.outputs.author }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+
+      # Append PR Details to the changelog
+      - name: Append PR Details to Changelog
+        run: |
+          PR_NUMBER="${{ steps.fetchDetails.outputs.pull-request-number }}"
+          PR_TITLE="${{ steps.fetchDetails.outputs.pull-request-title }}"
+          PR_URL="${{ steps.fetchDetails.outputs.pull-request-url }}"
+          PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
