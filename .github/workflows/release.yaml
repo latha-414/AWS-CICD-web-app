@@ -1,4 +1,4 @@
-name: Tag, Release, and Fetch Merged PR Details
+name: Tag and Release
 
 on:
   workflow_dispatch:
@@ -26,24 +26,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensures full history is fetched
-
-      # Fetch merged PR details
-      - name: Get Merged Pull Request Details
-        uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
-        id: pr_details
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Display PR Details (for debugging/logging purposes)
-      - name: Display PR Details
-        run: |
-          echo "PR Details:"
-          echo "Merged PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "Title: ${{ steps.pr_details.outputs.title }}"
-          echo "Body: ${{ steps.pr_details.outputs.body }}"
-          echo "Labels: ${{ steps.pr_details.outputs.labels }}"
-          echo "Assignees: ${{ steps.pr_details.outputs.assignees }}"
+          fetch-depth: 0
 
       # Tag and Release
       - name: Tag and Release
@@ -64,20 +47,30 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch # Replace with your target branch (e.g., 'main')
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
+
+      # Fetch Merged PRs using GitHub API
+      - name: Fetch Merged PRs
+        uses: octokit/request-action@v2.4.0
+        id: fetch_merged_prs
+        with:
+          route: GET /repos/{owner}/{repo}/pulls
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          state: closed
+          base: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
-          echo -e "\n### Merged PR: #${{ steps.pr_details.outputs.number }}" >> CHANGELOG.md
-          echo -e "Title: ${{ steps.pr_details.outputs.title }}" >> CHANGELOG.md
-          echo -e "Body: ${{ steps.pr_details.outputs.body }}" >> CHANGELOG.md
-          echo -e "Labels: ${{ steps.pr_details.outputs.labels }}" >> CHANGELOG.md
-          echo -e "Assignees: ${{ steps.pr_details.outputs.assignees }}" >> CHANGELOG.md
-          cat CHANGELOG.md  # Display the updated changelog content
-
+          echo "### Merged PRs" >> CHANGELOG.md
+          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> CHANGELOG.md
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
