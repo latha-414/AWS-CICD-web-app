@@ -52,8 +52,9 @@ jobs:
           output-file: CHANGELOG.md
 
       # Fetch Merged PRs using bcgov/action-get-pr
-      - id: vars
-        uses: bcgov/action-get-pr@vX.Y.Z
+      - name: Get PR Number
+        uses: bcgov/action-get-pr@v0.0.1
+        id: vars
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
