@@ -53,9 +53,9 @@ jobs:
           output-file: CHANGELOG.md
 
       # Get PR Details using Get Merged PR Action
-      - name: Get Merged PR Details
+      - name: Auto Pull Request Creator
+        uses: changcheng967/AutoPullBot@v1.5
         id: pr_details
-        uses: amk-archive/github-action-pullrequest-details@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}  # Automatically using the PR number from the event
