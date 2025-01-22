@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
+          ref: main
 
       # Tag and Release
       - name: Tag and Release
@@ -48,7 +48,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
+          git-branch: main
           tag-prefix: v
           output-file: CHANGELOG.md
 
@@ -58,6 +58,12 @@ jobs:
         uses: benlei/find-merged-pull-request@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          branch: pr-branch
+
+      # Debug Output to see raw PR details
+      - name: Debug Raw Merged PR Details
+        run: |
+          echo "Raw PR Output: ${{ steps.get-merged-pr.outputs }}"
 
       # Extract details from the action output and set them as environment variables
       - name: Set PR Details as Environment Variables
@@ -84,11 +90,11 @@ jobs:
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
           body_path: CHANGELOG.md
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
