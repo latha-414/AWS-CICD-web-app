@@ -52,23 +52,26 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get merged PR details and append to the changelog
-      - name: Get PR Details
-        id: pr_details
-        uses: tibdex/github-releases@v1
+      # Get closed PR details and append to the changelog
+      - name: Get Closed PR Details
+        uses: cloudposse-github-actions/get-pr@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          filterOutClosed: false
+          state: closed
           base: main
-          state: merged
+        id: closed_prs
 
       - name: Append PR Details to Changelog
         run: |
-          pr_details=$(cat pr_debug.json)
-          echo "### PR Details" >> CHANGELOG.md
-          if [[ -z "$pr_details" ]]; then
-            echo "No PRs found" >> CHANGELOG.md
+          if [ "${{ steps.closed_prs.outputs.found }}" = "true" ]; then
+            echo "### PR Details" >> CHANGELOG.md
+            for pr in ${{ steps.closed_prs.outputs.json }}; do
+              echo "- PR [#${pr.number}](${pr.html_url}): ${pr.title} by @${pr.user.login}" >> CHANGELOG.md
+            done
           else
-            echo "$pr_details" | jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .url + "): " + .title + " by @" + .author.login' >> CHANGELOG.md
+            echo "No PRs found" >> CHANGELOG.md
+          fi
 
       # Create GitHub Release
       - name: Create GitHub Release
