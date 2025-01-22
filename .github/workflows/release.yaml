@@ -51,15 +51,11 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Truncate Changelog if Too Large
+      - name: Truncate Changelog
         run: |
-          MAX_SIZE=125000
-          CHANGESIZE=$(wc -c < CHANGELOG.md)
-          if [ "$CHANGESIZE" -gt "$MAX_SIZE" ]; then
-            echo "Changelog too large. Truncating..."
-            # Truncate to 125,000 characters
-            head -c 125000 CHANGELOG.md > CHANGELOG.md
-          fi
+          head -c 124900 CHANGELOG.md > TRUNCATED_CHANGELOG.md
+          echo "\n...Truncated due to length limitations." >> TRUNCATED_CHANGELOG.md
+
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
