@@ -57,7 +57,12 @@ jobs:
         id: fetchDetails
         uses: justinyoo/github-pr-merge-action@v1
         with:
-          merge-method: merge
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          issueId: ${{ github.event.pull_request.number }}
+          mergeMethod: merge
+          deleteBranch: false
 
       # Extract PR Author from the PR Merge Details output
       - name: Extract PR Author
