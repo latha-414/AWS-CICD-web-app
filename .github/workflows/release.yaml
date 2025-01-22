@@ -53,8 +53,8 @@ jobs:
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
+        uses: octokit/request-action@v2.4.0
         id: fetch_merged_prs
-        uses: octokit/request-action@v2
         with:
           route: GET /repos/{owner}/{repo}/pulls
           owner: ${{ github.repository_owner }}
@@ -63,6 +63,7 @@ jobs:
           base: main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
