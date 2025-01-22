@@ -22,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Install jq
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -57,7 +61,7 @@ jobs:
         id: closed_prs
         run: |
           CLOSED_PRS=$(gh pr list --state closed --json number,title,author,mergedAt,url --jq '.[] | select(.mergedAt != null) | {number, title, author: .author.login, url}')
-          echo "CLOSED_PRS='$CLOSED_PRS'" >> $GITHUB_ENV
+          echo "CLOSED_PRS=$(echo $CLOSED_PRS | jq -c .)" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,8 +69,7 @@ jobs:
       - name: Extract PR Details
         id: extract_pr_details
         run: |
-          CLOSED_PRS="${{ env.CLOSED_PRS }}"
-          echo "$CLOSED_PRS" | jq -c '.' | while IFS= read -r pr; do
+          echo "${{ env.CLOSED_PRS }}" | jq -c '.[]' | while IFS= read -r pr; do
             PR_NUMBER=$(echo "$pr" | jq -r '.number')
             PR_TITLE=$(echo "$pr" | jq -r '.title')
             PR_AUTHOR=$(echo "$pr" | jq -r '.author')
