@@ -59,13 +59,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract and Display PR Details
+      - name: Fetch PR Details using Octokit
+        id: fetch_pr
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Append PR Details to Changelog
         run: |
-           echo "PR Details: ${{ steps.fetch_pr.outputs.data }}"
-           echo "PR Title: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.title')"
-           echo "PR Author: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.user.login')"
-           echo "PR Branch: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.head.ref')"
-           echo "PR Number: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.number')"
+          echo "Appending PR details to CHANGELOG.md"
+          echo -e "\n## Pull Request Details" >> CHANGELOG.md
+          echo "- **PR Title**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.title')" >> CHANGELOG.md
+          echo "- **PR Author**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.user.login')" >> CHANGELOG.md
+          echo "- **PR Branch**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.head.ref')" >> CHANGELOG.md
+          echo "- **PR Number**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.number')" >> CHANGELOG.md
+
 
 
      
