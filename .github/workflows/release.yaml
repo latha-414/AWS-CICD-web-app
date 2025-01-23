@@ -60,11 +60,13 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           state: closed
 
+     
+
       # Append Closed PR Details to Changelog
       - name: Append Closed PR Details to Changelog
         run: |
           echo "### Closed PR Details" >> CHANGELOG.md
-          echo "${{ steps.closed_prs.outputs.pull_requests }}" >> CHANGELOG.md
+          echo "${{ steps.closed_prs.outputs.pull_requests | jq -r '.[] | [.number, .title, .user.login, .closed_at] | @tsv' | awk '{print "- PR #" $1 \" - \" $2 \" by \" $3 \" closed at: \" $4}' }}" >> CHANGELOG.md
      
       # Create GitHub Release
       - name: Create GitHub Release
