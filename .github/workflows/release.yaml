@@ -47,7 +47,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: main
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
