@@ -53,7 +53,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
-          custom_tag: ${{ steps.pr_details.outputs.PR Number }}-${{ github.event.inputs.release_type }}-${{ github.sha }}
 
       - name: Get New Tag
         id: get_new_tag
