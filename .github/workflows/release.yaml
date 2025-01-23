@@ -68,6 +68,11 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+      - name: PR Merge
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
