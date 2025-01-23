@@ -43,11 +43,11 @@ jobs:
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
       # Generate Changelog
-     # - name: Generate Changelog
-      #  id: changelog
-       # uses: TriPSs/conventional-changelog-action@v5
-        #with:
-         # github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           #git-branch: pr-branch
           #tag-prefix: v
 
@@ -58,6 +58,20 @@ jobs:
           route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Append PR Details to Changelog
+        run: |
+          # Fetch PR details from previous step
+          PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
+          PR_TITLE="${{ fromJson(steps.fetch_pr.outputs.data).title }}"
+          PR_URL="${{ fromJson(steps.fetch_pr.outputs.data).html_url }}"
+          PR_AUTHOR="${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
+    
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
      
       # Create GitHub Release
       - name: Create GitHub Release
