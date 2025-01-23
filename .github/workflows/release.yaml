@@ -66,6 +66,8 @@ jobs:
           PR_DETAILS=$(gh pr list --state merged --json number,title,author --limit 5)
           echo "PR_DETAILS=${PR_DETAILS}" >> $GITHUB_ENV
           echo "${PR_DETAILS}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Append Merged PR Details to the Changelog
       - name: Append PR Details to Changelog
