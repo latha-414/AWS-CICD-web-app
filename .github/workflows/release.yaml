@@ -48,9 +48,8 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          #git-branch: pr-branch
-          #tag-prefix: v
 
+      # Fetch PR Details using Octokit
       - name: Fetch PR Details using Octokit
         id: fetch_pr
         uses: octokit/request-action@v2.x
@@ -59,28 +58,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Debugging the output of Fetch PR Details
+      - name: Debug PR Output
+        run: |
+          echo "Raw PR Details Output: ${{ steps.fetch_pr.outputs.data }}"
+
+      # Debug PR Details - Check if fields are correctly parsed
       - name: Debug PR Details
         run: |
-          echo "PR Number: ${{ fromJson(steps.fetch_pr.outputs.data).number }}"
-          echo "PR Branch: ${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
-          echo "PR Title: ${{ fromJson(steps.fetch_pr.outputs.data).title }}"
-          echo "PR Author: ${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
+          PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
+          PR_BRANCH="${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
+          PR_TITLE="${{ fromJson(steps.fetch_pr.outputs.data).title }}"
+          PR_AUTHOR="${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
+          
+          # Print values to verify parsing
+          echo "PR Number: $PR_NUMBER"
+          echo "PR Branch: $PR_BRANCH"
+          echo "PR Title: $PR_TITLE"
+          echo "PR Author: $PR_AUTHOR"
 
-
+      # Append PR Details to Changelog
       - name: Append PR Details to Changelog
-        run: |   
+        run: |
           # Fetch PR details from previous step
           PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
           PR_BRANCH="${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
           PR_TITLE="${{ fromJson(steps.fetch_pr.outputs.data).title }}"
           PR_AUTHOR="${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
-
+          
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
           echo "### PR Details" >> CHANGELOG.md
           echo "PR #$PR_NUMBER: [$PR_BRANCH] - $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
-
-
      
       # Create GitHub Release
       - name: Create GitHub Release
