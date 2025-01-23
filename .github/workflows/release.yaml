@@ -42,11 +42,13 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Auto Changelog
-        uses: wagoid/commitlint-action@v1
+      - name: Generate Changelog for Merged PRs
+        uses: changelog-generator-action/changelog-generator-action@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: "v${{ env.NEW_TAG }}"
           changelog-path: ./CHANGELOG.md
+
 
 
       # Create GitHub Release
