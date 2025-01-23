@@ -66,15 +66,19 @@ jobs:
         run: |
           PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
           echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+          
+        #!/usr/bin/env bash
 
-      # Fetch Merged PRs
-      - name: Fetch Merged PRs
-        id: fetch_merged_prs
-        run: |
-          MERGED_PRS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/latha-414/AWS-CICD-web-app/pulls?state=closed&base=main")
-          echo "MERGED_PRS=${MERGED_PRS}" >> $GITHUB_ENV
+        # Fetch Merged PRs
+        MERGED_PRS=$(curl -s -H "Authorization: token YOUR_ACCESS_TOKEN" \
+        "https://api.github.com/repos/latha-414/AWS-CICD-web-app/pulls?state=closed&base=main")
 
+        # Debugging output
+        echo "Fetched Merged PRs: ${MERGED_PRS}"
+
+         # Export to GitHub environment
+         echo "MERGED_PRS=${MERGED_PRS}" >> $GITHUB_ENV
+         
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
