@@ -59,12 +59,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Append PR Details to Changelog
+      - name: Debug PR Details
         run: |
-          # Debugging the raw output
-          echo "Fetching PR details..."
-          echo "PR Details: ${{ steps.fetch_pr.outputs.data }}"
-          
+          echo "PR Number: ${{ fromJson(steps.fetch_pr.outputs.data).number }}"
+          echo "PR Branch: ${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
+          echo "PR Title: ${{ fromJson(steps.fetch_pr.outputs.data).title }}"
+          echo "PR Author: ${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
+
+
+      - name: Append PR Details to Changelog
+        run: |   
           # Fetch PR details from previous step
           PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
           PR_BRANCH="${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
