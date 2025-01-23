@@ -67,6 +67,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+           # Append Merged PR Details to Changelog
+      - name: Append PR Details to Changelog
+        run: |
+          echo "### Merged PR Details" >> CHANGELOG.md
+          echo "- PR Number: #${{ steps.pr_info.outputs.number }}" >> CHANGELOG.md
+          echo "- Title: ${{ steps.pr_info.outputs.title }}" >> CHANGELOG.md
+          echo "- Author: ${{ steps.pr_info.outputs.author }}" >> CHANGELOG.md
+          echo "- Branch: ${{ steps.pr_info.outputs.branch }}" >> CHANGELOG.md
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
