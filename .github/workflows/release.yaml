@@ -1,19 +1,58 @@
-name: Release Workflow
+name: Tag and Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
-  release:
+  create_release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: pr-branch
+
+      # Tag and Release
+      - name: Tag and Release
+        id: tag_release
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: ${{ github.event.inputs.release_type }}
+          tag_prefix: v
+
+      # Export the new tag
+      - name: Get New Tag
+        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+
+      # Generate Changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
+          tag-prefix: v
+          output-file: CHANGELOG.md
 
       - name: Get Merged PR Information
-        id: get_pr
         uses: coin-tracker/get-merged-pull-request-information@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -22,13 +61,15 @@ jobs:
         run: |
           echo "### Merged Pull Requests" >> CHANGELOG.md
           echo "- PR [#${{ steps.get_pr.outputs.number }}](${{ steps.get_pr.outputs.html_url }}): ${{ steps.get_pr.outputs.title }} by @${{ steps.get_pr.outputs.assignees }}" >> CHANGELOG.md
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+    
+      # Create GitHub Release
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
         with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
-          body: |
-            $(cat CHANGELOG.md)
+          tag_name: "${{ env.NEW_TAG }}"
+          release_name: "Release ${{ env.NEW_TAG }}"
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
