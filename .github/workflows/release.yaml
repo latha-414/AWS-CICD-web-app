@@ -1,6 +1,8 @@
-name: Tag and Release
+name: Get Closed PR Details and Tag and Release
 
 on:
+  pull_request:
+    types: [closed]
   workflow_dispatch:
     inputs:
       release_type:
@@ -18,6 +20,20 @@ permissions:
   pull-requests: read
 
 jobs:
+  get-pr-details:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Get PR Details
+        run: |
+          echo "PR Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "PR Author: ${{ github.event.pull_request.user.login }}"
+
   create_release:
     runs-on: ubuntu-latest
 
@@ -51,36 +67,6 @@ jobs:
           git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      # Get closed PR details and append to the changelog
-      - name: Get Closed PR Details
-        uses: cloudposse-github-actions/get-pr@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          filterOutClosed: false
-          state: closed
-          base: main
-        id: closed_prs
-
-      # Install jq (if it's not already installed on the runner)
-      - name: Install jq
-        run: sudo apt-get install jq
-
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
-        run: |
-          if [ "${{ steps.closed_prs.outputs.found }}" = "true" ]; then
-            echo "### PR Details" >> CHANGELOG.md
-            
-            # Ensure JSON data is valid
-            if echo "${{ steps.closed_prs.outputs.json }}" | jq empty; then
-              echo "${{ steps.closed_prs.outputs.json }}" | jq -r '.[] | "- PR [#\(.number)](\(.html_url)): \(.title) by @\(.user.login)"' >> CHANGELOG.md
-            else
-              echo "Invalid JSON format" >> CHANGELOG.md
-            fi
-          else
-            echo "No PRs found" >> CHANGELOG.md
-          fi
 
       # Create GitHub Release
       - name: Create GitHub Release
