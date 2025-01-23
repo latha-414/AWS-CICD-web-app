@@ -63,14 +63,15 @@ jobs:
         run: |
           # Fetch PR details from previous step
           PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
+          PR_BRANCH="${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
           PR_TITLE="${{ fromJson(steps.fetch_pr.outputs.data).title }}"
-          PR_URL="${{ fromJson(steps.fetch_pr.outputs.data).html_url }}"
           PR_AUTHOR="${{ fromJson(steps.fetch_pr.outputs.data).user.login }}"
-    
+
           # Create Changelog with Release Version and PR Details
           echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          echo "PR #$PR_NUMBER: [$PR_BRANCH] - $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
 
      
       # Create GitHub Release
