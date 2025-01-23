@@ -58,11 +58,34 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Append Merged PR Details to Changelog
-      - name: Append Merged PR Details to Changelog
+    
+      # Fetch all merged PR details
+      - name: Get Merged PRs
+        id: get_prs
         run: |
-          echo "### Merged PR Details" >> CHANGELOG.md
-          echo "${{ steps.merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
+          PR_DETAILS=$(gh pr list --state merged --json number,title,author --limit 5)
+          echo "PR_DETAILS=${PR_DETAILS}" >> $GITHUB_ENV
+          echo "${PR_DETAILS}"
+
+      # Append Merged PR Details to the Changelog
+      - name: Append PR Details to Changelog
+        run: |
+          echo "### Merged PRs" >> CHANGELOG.md
+          echo "${{ env.PR_DETAILS }}" | jq -c '.[]' | while read pr; do
+            NUMBER=$(echo "$pr" | jq -r '.number')
+            TITLE=$(echo "$pr" | jq -r '.title')
+            AUTHOR=$(echo "$pr" | jq -r '.author.login')
+            echo "- PR #${NUMBER}: ${TITLE} by @${AUTHOR}" >> CHANGELOG.md
+          done
+
+      # Push Changelog to Repository
+      - name: Push Changelog
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG for release ${{ env.NEW_TAG }}"
+          git push origin main
 
       # Create GitHub Release
       - name: Create GitHub Release
