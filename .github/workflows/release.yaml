@@ -37,73 +37,17 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
-
+ 
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Generate Changelog
-      - name: Generate Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
+      - name: Auto Changelog
+        uses: wagoid/commitlint-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          
-      # Fetch PR Details using Octokit
-      - name: Fetch PR Details using Octokit
-        id: fetch_pr
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-path: ./CHANGELOG.md
 
-      # Debugging the output of Fetch PR Details
-      - name: Debug PR Output
-        run: |
-          echo "Raw PR Details Output: ${{ steps.fetch_pr.outputs.data }}"
-
-      # Debug PR Details - Check if fields are correctly parsed
-      - name: Debug PR Details
-        run: |
-          PR_DATA="${{ steps.fetch_pr.outputs.data }}"
-          echo "Full PR Data: $PR_DATA"  # Output the full PR data for better debugging
-
-          # Ensure parsing works correctly by showing specific fields
-          PR_NUMBER=$(echo "$PR_DATA" | jq .number)
-          PR_BRANCH=$(echo "$PR_DATA" | jq -r .head.ref)
-          PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
-          PR_AUTHOR=$(echo "$PR_DATA" | jq -r .user.login)
-          PR_MERGED=$(echo "$PR_DATA" | jq -r .merged)
-
-          # Output parsed values to verify
-          echo "PR Number: $PR_NUMBER"
-          echo "PR Branch: $PR_BRANCH"
-          echo "PR Title: $PR_TITLE"
-          echo "PR Author: $PR_AUTHOR"
-          echo "PR Merged: $PR_MERGED"
-
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
-        run: |
-          # Fetch PR details from previous step
-          PR_NUMBER="${{ steps.fetch_pr.outputs.data.number }}"
-          PR_BRANCH="${{ steps.fetch_pr.outputs.data.head.ref }}"
-          PR_TITLE="${{ steps.fetch_pr.outputs.data.title }}"
-          PR_AUTHOR="${{ steps.fetch_pr.outputs.data.user.login }}"
-          PR_MERGED="${{ steps.fetch_pr.outputs.data.merged }}"
-
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          
-          # Check if PR is merged and format accordingly
-          if [ "$PR_MERGED" == "true" ]; then
-            echo "PR #$PR_NUMBER: [$PR_BRANCH] - $PR_TITLE by @$PR_AUTHOR (Merged)" >> CHANGELOG.md
-          else
-            echo "PR #$PR_NUMBER: [$PR_BRANCH] - $PR_TITLE by @$PR_AUTHOR (Not Merged)" >> CHANGELOG.md
-          fi
 
       # Create GitHub Release
       - name: Create GitHub Release
