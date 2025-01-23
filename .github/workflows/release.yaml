@@ -52,18 +52,12 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Create GitHub Release with PRs
-        uses: peter-evans/release-with-prs@v1
+      - name: Fetch Merged PRs
+        uses: git-ecosystem/git-pull-request@v1
         with:
-          tag: ${{ github.ref }}
-          release_name: 'Release ${{ github.ref }}'
-          pr_filter: 'merged'  # Only include merged PRs
-          body: |
-            ### Merged PRs in this release:
-            - List of merged PRs will be populated automatically.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-state: 'closed'
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
