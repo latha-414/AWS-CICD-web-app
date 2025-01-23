@@ -1,4 +1,4 @@
-name: Tag and Release
+name: Tag, Release, and Fetch Merged PR Details
 
 on:
   workflow_dispatch:
@@ -12,6 +12,9 @@ on:
           - major
           - minor
           - patch
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -22,12 +25,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Checkout the repository (ensure the branch is dynamically determined or set correctly)
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
+          ref: ${{ github.ref }}  # Automatically picks the branch from the context
 
       # Tag and Release
       - name: Tag and Release
@@ -37,21 +40,35 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
- 
+
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Generate Changelog for Merged PRs
-        uses: changelog-generator-action/changelog-generator-action@v2
+      # Generate Changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: ${{ github.ref }}
+          tag-prefix: v
+          output-file: CHANGELOG.md
+
+      # Fetch Merged Pull Request Details (Place this before the release step)
+      - name: Fetch Merged PR Details
+        uses: coin-tracker/get-merged-pull-request@v1.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          version: "v${{ env.NEW_TAG }}"
-          changelog-path: ./CHANGELOG.md
 
+      - name: Output PR details
+        run: |
+          echo "PR Title: ${{ steps.get-merged-pr-info.outputs.title }}"
+          echo "PR Number: ${{ steps.get-merged-pr-info.outputs.number }}"
+          echo "PR Labels: ${{ steps.get-merged-pr-info.outputs.labels }}"
+          echo "PR Assignees: ${{ steps.get-merged-pr-info.outputs.assignees }}"
 
-
-      # Create GitHub Release
+      # Create GitHub Release (This is now the last step)
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
