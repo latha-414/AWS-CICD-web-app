@@ -61,6 +61,10 @@ jobs:
 
       - name: Append PR Details to Changelog
         run: |
+          # Debugging the raw output
+          echo "Fetching PR details..."
+          echo "PR Details: ${{ steps.fetch_pr.outputs.data }}"
+          
           # Fetch PR details from previous step
           PR_NUMBER="${{ fromJson(steps.fetch_pr.outputs.data).number }}"
           PR_BRANCH="${{ fromJson(steps.fetch_pr.outputs.data).head.ref }}"
