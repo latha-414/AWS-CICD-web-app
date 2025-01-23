@@ -50,14 +50,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           git-branch: pr-branch
           tag-prefix: v
-          output-file: CHANGELOG.md
-
-      - name: Fetch PR Details using Octokit
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch PR Details using Octokit
         id: fetch_pr
@@ -66,18 +58,6 @@ jobs:
           route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Append PR Details to Changelog
-        run: |
-          echo "Appending PR details to CHANGELOG.md"
-          echo -e "\n## Pull Request Details" >> CHANGELOG.md
-          echo "- **PR Title**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.title')" >> CHANGELOG.md
-          echo "- **PR Author**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.user.login')" >> CHANGELOG.md
-          echo "- **PR Branch**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.head.ref')" >> CHANGELOG.md
-          echo "- **PR Number**: $(echo '${{ steps.fetch_pr.outputs.data }}' | jq -r '.number')" >> CHANGELOG.md
-
-
-
      
       # Create GitHub Release
       - name: Create GitHub Release
