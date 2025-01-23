@@ -43,13 +43,13 @@ jobs:
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
       # Generate Changelog
-      - name: Generate Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          tag-prefix: v
+     # - name: Generate Changelog
+      #  id: changelog
+       # uses: TriPSs/conventional-changelog-action@v5
+        #with:
+         # github-token: ${{ secrets.GITHUB_TOKEN }}
+          #git-branch: pr-branch
+          #tag-prefix: v
 
       - name: Fetch PR Details using Octokit
         id: fetch_pr
