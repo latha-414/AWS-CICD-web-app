@@ -71,7 +71,7 @@ jobs:
 
         # Fetch Merged PRs
         MERGED_PRS=$(curl -s -H "Authorization: token YOUR_ACCESS_TOKEN" \
-        "https://api.github.com/repos/latha-414/AWS-CICD-web-app/pulls?state=closed&base=main")
+           "https://api.github.com/repos/latha-414/AWS-CICD-web-app/pulls?state=closed&base=main")
 
         # Debugging output
         echo "Fetched Merged PRs: ${MERGED_PRS}"
