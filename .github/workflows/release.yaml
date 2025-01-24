@@ -51,6 +51,13 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+      # Trim Changelog for Release Body
+      - name: Trim Changelog for Release Body
+        run: |
+          echo "### Release Notes" > RELEASE_BODY.md
+          head -n 50 CHANGELOG.md >> RELEASE_BODY.md
+          echo "Full changelog available in the repository." >> RELEASE_BODY.md
+
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
         uses: octokit/request-action@v2.4.0
@@ -64,19 +71,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
       # Append Merged PR Details to Changelog
       - name: Append Merged PR Details to Changelog
         run: |
-          echo "### Merged PRs" >> CHANGELOG.md
-          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> CHANGELOG.md
+          echo "### Merged PRs" >> RELEASE_BODY.md
+          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> RELEASE_BODY.md
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body_path: CHANGELOG.md
+          body_path: RELEASE_BODY.md
           draft: false
           prerelease: false
         env:
