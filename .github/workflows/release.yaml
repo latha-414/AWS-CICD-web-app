@@ -42,21 +42,27 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Fetch Closed PRs
+    
+          # Fetch Closed PRs
       - name: Fetch Closed PRs
         id: fetch_closed_prs
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: pulls } = await github.pulls.list({
+            try {
+              const { data: pulls } = await github.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'closed',
               per_page: 100
-            });
-            const closedPRs = pulls.map(pr => `#${pr.number}: ${pr.title}`).join('\n');
-            return closedPRs;
+              });
+              const closedPRs = pulls.map(pr => `#${pr.number}: ${pr.title}`).join('\n');
+              return closedPRs;
+            } catch (error) {
+              console.error('Error fetching closed PRs:', error);
+              return 'No closed PRs found or an error occurred.';
+            }
 
       # Generate Changelog
       - name: Generate Changelog
