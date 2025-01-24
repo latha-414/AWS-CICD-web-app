@@ -32,7 +32,7 @@ jobs:
       # Tag and Release
       - name: Tag and Release
         id: tag_release
-        uses: mathieudutour/github-tag-action@v6.2
+        uses: mathieudour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
@@ -41,28 +41,6 @@ jobs:
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
-
-    
-          # Fetch Closed PRs
-      - name: Fetch Closed PRs
-        id: fetch_closed_prs
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            try {
-              const { data: pulls } = await github.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed',
-              per_page: 100
-              });
-              const closedPRs = pulls.map(pr => `#${pr.number}: ${pr.title}`).join('\n');
-              return closedPRs;
-            } catch (error) {
-              console.error('Error fetching closed PRs:', error);
-              return 'No closed PRs found or an error occurred.';
-            }
 
       # Generate Changelog
       - name: Generate Changelog
@@ -74,9 +52,11 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Append Closed PRs to Changelog
-      - name: Append Closed PRs to Changelog
-        run: echo -e "\n## Closed Pull Requests\n${{ steps.fetch_closed_prs.outputs.result }}" >> CHANGELOG.md
+      # Get Closed PR Details using GitHub CLI
+      - name: Get Closed PRs
+        run: |
+          gh pr list --state closed --limit 5 --json title,url,author --jq '.[] | "- PR [\(.title)](\(.url)): by \(.author.login)"' > closed_prs.txt
+          cat closed_prs.txt >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
