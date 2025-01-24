@@ -68,6 +68,17 @@ jobs:
           echo "PR Body: ${{ steps.merged-pr-info.outputs.pull-request-body }}"
           echo "PR URL: ${{ steps.merged-pr-info.outputs.pull-request-url }}
 
+           # Check if PR Number is available
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Error: PR details not found."
+            exit 1
+          fi
+          
+          # Append PR details to the changelog
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
