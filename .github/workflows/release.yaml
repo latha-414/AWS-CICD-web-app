@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: pr-branch  # Assuming 'pr-branch' is the branch where the PR is merged
 
       # Tag and Release
       - name: Tag and Release
@@ -37,7 +38,7 @@ jobs:
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
 
-      # Export the new tag
+      # Export the new tag to environment variable
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
@@ -47,40 +48,22 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch  # Ensure this points to the correct branch for the changelog generation
           tag-prefix: v
           output-file: CHANGELOG.md
-      - name: Get the merged pull request information
-        uses: yu-iskw/merged-pr-info-action@v1.0.2
-        id: merged-pr-info
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Comment to the merged pull request"
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          debug: true
-          script: |
-            const pr_number = "${{ steps.merged-pr-info.outputs.pull-request-number }}";
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr_number,
-              body: "@" + "${{ steps.merged-pr-info.outputs.pull-request-creator }}" +  " The jobs are passed!"
-            });
-            console.log(`Commented to the pull request ${pr_number}`);
 
-      # Append Merged PR Details to Changelog
-      - name: Append PR Details to Changelog
+      # Fetch Closed PR Details via GitHub API
+      - name: Get Closed PR Details
+        id: closed_pr_details
         run: |
-          PR_NUMBER="${{ steps.merged-pr-info.outputs.pull-request-number }}"
-          PR_TITLE="${{ steps.merged-pr-info.outputs.pull-request-title }}"
-          PR_URL="${{ steps.merged-pr-info.outputs.pull-request-url }}"
-          PR_CREATOR="${{ steps.merged-pr-info.outputs.pull-request-creator }}"
+          PR_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed")
           
-          # Create Changelog with Release Version and PR Details
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### Merged PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_CREATOR" >> CHANGELOG.md
+          # Output PR details for debugging
+          echo "Closed PRs: $PR_DETAILS"
+
+          # Optionally, export PR details to be used in subsequent steps (for example, adding details to the release body)
+          echo "CLOSED_PRS=$PR_DETAILS" >> $GITHUB_ENV
 
       # Create GitHub Release
       - name: Create GitHub Release
