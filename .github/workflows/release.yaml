@@ -29,13 +29,28 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
+      # Generate the initial changelog
+      - name: Generate Initial Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
+          tag-prefix: v
+          output-file: CHANGELOG.md
+
       # Fetch closed PR details
       - name: Get closed PRs
         id: get_prs
-        uses: cloudposse-github-actions/get-pr@v2.0.0
+        uses: cloudposse/github-actions/get-pr@v2.0.0
         with:
           state: closed
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Debug: Verify fetched PR details
+      - name: Debug PR Details
+        run: |
+          echo "Fetched PRs: ${{ steps.get_prs.outputs.number }} - ${{ steps.get_prs.outputs.title }} - ${{ steps.get_prs.outputs.url }} - ${{ steps.get_prs.outputs.author }}"
 
       # Format PR details and append to changelog
       - name: Format and Append PR Details to Changelog
@@ -54,16 +69,6 @@ jobs:
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
-
-      # Generate Changelog
-      - name: Generate Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          tag-prefix: v
-          output-file: CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
