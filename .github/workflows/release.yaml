@@ -51,14 +51,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-   # Minimal Changelog for Release Body
-      - name: Generate Minimal Release Body
+      # Trim Changelog for Release Body
+      - name: Trim Changelog for Release Body
         run: |
           echo "### Release Notes" > RELEASE_BODY.md
-          echo "This release includes important updates and fixes." >> RELEASE_BODY.md
+          echo "Release: ${{ env.NEW_TAG }}" >> RELEASE_BODY.md
           echo "" >> RELEASE_BODY.md
-          echo "For the full changelog, visit: [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)" >> RELEASE_BODY.md
-
+          head -n 20 CHANGELOG.md >> RELEASE_BODY.md
+          echo "" >> RELEASE_BODY.md
+          echo "For the full changelog, see the [repository](https://github.com/${{ github.repository }})." >> RELEASE_BODY.md
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
@@ -74,10 +75,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Append Merged PR Details to Changelog
-      - name: Append Merged PR Details to Changelog
+      - name: Append Merged PR Details to Release Body
         run: |
-          echo "### Merged PRs" >> RELEASE_BODY.md
-          echo "${{ steps.fetch_merged_prs.outputs.data }}" >> RELEASE_BODY.md
+          echo "### Merged Pull Requests" >> RELEASE_BODY.md
+          echo "" >> RELEASE_BODY.md
+          echo "${{ steps.fetch_merged_prs.outputs.data }}" | jq -r '.[] | "- " + .title + " (#" + (.number | tostring) + ")"' >> RELEASE_BODY.md
 
       # Create GitHub Release
       - name: Create GitHub Release
