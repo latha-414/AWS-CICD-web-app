@@ -29,34 +29,6 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
-      # Generate the initial changelog
-      - name: Generate Initial Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          tag-prefix: v
-          output-file: CHANGELOG.md
-
-      # Fetch closed PR details
-      - name: Get closed PRs
-        id: get_prs
-        uses: cloudposse/github-actions/get-pr@v2.0.0
-        with:
-          state: closed
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Debug: Verify fetched PR details
-      - name: Debug PR Details
-        run: |
-          echo "Fetched PRs: ${{ steps.get_prs.outputs.number }} - ${{ steps.get_prs.outputs.title }} - ${{ steps.get_prs.outputs.url }} - ${{ steps.get_prs.outputs.author }}"
-
-      # Format PR details and append to changelog
-      - name: Format and Append PR Details to Changelog
-        run: |
-          echo "PR #${{ steps.get_prs.outputs.number }}: [${{ steps.get_prs.outputs.title }}](${{ steps.get_prs.outputs.url }}) by @${{ steps.get_prs.outputs.author }}" >> CHANGELOG.md
-
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -69,6 +41,60 @@ jobs:
       # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+
+      # Generate Changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
+          tag-prefix: v
+          output-file: CHANGELOG.md
+
+      # Get PR Details using Get PR Action
+      - name: Get PR Details
+        uses: cloudposse-github-actions/get-pr@main
+        id: pr_details
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          id: ${{ github.event.number }}
+
+      # Extract PR Author from the PR Details output
+      - name: Extract PR Author
+        id: extract_author
+        run: |
+          PR_AUTHOR="${{ fromJSON(steps.pr_details.outputs.json).user.login }}"
+          echo "PR_AUTHOR=${PR_AUTHOR}" >> $GITHUB_ENV
+
+      # Append PR Details to the changelog
+      - name: Append PR Details to Changelog
+        run: |
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
+          PR_AUTHOR="${{ env.PR_AUTHOR }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+
+      # Get merged PR details
+      - name: Get Merged PR Details
+        uses: yu-iskw/merged-pr-info-action@v1.0.1
+        id: merged-pr-info
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Output Merged PR Details (Optional)
+      - name: Display Merged PR Details
+        run: |
+          echo "PR Number: ${{ steps.merged-pr-info.outputs.pull-request-number }}"
+          echo "PR Title: ${{ steps.merged-pr-info.outputs.pull-request-title }}"
+          echo "PR Creator: ${{ steps.merged-pr-info.outputs.pull-request-creator }}"
+          echo "PR Body: ${{ steps.merged-pr-info.outputs.pull-request-body }}"
+          echo "PR URL: ${{ steps.merged-pr-info.outputs.pull-request-url }}
 
       # Create GitHub Release
       - name: Create GitHub Release
