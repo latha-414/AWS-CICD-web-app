@@ -52,15 +52,25 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-        # Get Closed PR Details using GitHub CLI
+      # Get Closed PR Details using GitHub Marketplace Action
       - name: Get Closed PRs
+        uses: softprops/github-action-pull-request@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          state: closed
+          limit: 5
+        id: pr_details
+
+      # Append PR Details to Changelog
+      - name: Append PR Details to Changelog
         run: |
-          gh pr list --state closed --limit 5 --json number,title,url,author --jq '.[] | "PR #\(.number): [\(.title)](\(.url)) by @\(.author.login)"' > closed_prs.txt
-          cat closed_prs.txt >> CHANGELOG.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
+          for pr in ${{ steps.pr_details.outputs.pull_requests }}; do
+            PR_NUMBER=$(echo $pr | jq -r '.number')
+            PR_TITLE=$(echo $pr | jq -r '.title')
+            PR_URL=$(echo $pr | jq -r '.url')
+            PR_AUTHOR=$(echo $pr | jq -r '.author.login')
+            echo "PR #$PR_NUMBER: [$PR_TITLE]($PR_URL) by @$PR_AUTHOR" >> CHANGELOG.md
+          done
 
       # Create GitHub Release
       - name: Create GitHub Release
