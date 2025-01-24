@@ -57,6 +57,8 @@ jobs:
         run: |
           gh pr list --state closed --limit 5 --json title,url,author --jq '.[] | "- PR [\(.title)](\(.url)): by \(.author.login)"' > closed_prs.txt
           cat closed_prs.txt >> CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Create GitHub Release
       - name: Create GitHub Release
