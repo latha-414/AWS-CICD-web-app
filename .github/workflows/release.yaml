@@ -32,7 +32,7 @@ jobs:
       # Tag and Release
       - name: Tag and Release
         id: tag_release
-        uses: mathieudour/github-tag-action@v6.2
+        uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
