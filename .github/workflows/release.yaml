@@ -52,18 +52,88 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
+    name: Tag and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: pr-branch
+
+      # Tag and Release
+      - name: Tag and Release
+        id: tag_release
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: ${{ github.event.inputs.release_type }}
+          tag_prefix: v
+
+      # Export the new tag to environment variable
+      - name: Get New Tag
+        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+
+      # Generate Changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
+          tag-prefix: v
+          output-file: CHANGELOG.md
+
       # Fetch Closed PR Details via GitHub API
       - name: Get Closed PR Details
         id: closed_pr_details
         run: |
+          # Fetch closed PRs from the GitHub API
           PR_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed")
-          
-          # Output PR details for debugging
-          echo "Closed PRs: $PR_DETAILS"
 
-          # Optionally, export PR details to be used in subsequent steps (for example, adding details to the release body)
-          echo "CLOSED_PRS=$PR_DETAILS" >> $GITHUB_ENV
+          # Parse and extract relevant PR details (e.g., title and merged date)
+          PR_TITLES=$(echo "$PR_DETAILS" | jq -r '.[] | "\(.title) - Merged at: \(.merged_at)"')
+
+          # Output PR details for debugging
+          echo "Closed PR Titles: $PR_TITLES"
+
+          # Export the formatted PR details to environment variable
+          echo "CLOSED_PRS=$PR_TITLES" >> $GITHUB_ENV
+
+      # Create GitHub Release
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: "${{ env.NEW_TAG }}"
+          release_name: "Release ${{ env.NEW_TAG }}"
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Create GitHub Release
       - name: Create GitHub Release
