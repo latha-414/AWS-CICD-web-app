@@ -58,7 +58,7 @@ jobs:
 
       # Get Closed and Merged PR Details
       - name: Get Closed and Merged PR
-        id: get_pr
+        id: PR
         uses: 8BitJonny/gh-get-current-pr@3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
