@@ -52,13 +52,14 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get Closed PR Details using GitHub CLI
+     # Get Closed PR Details using GitHub CLI
       - name: Get Closed PRs
         run: |
-          gh pr list --state closed --limit 5 --json title,url,author --jq '.[] | "- PR [\(.title)](\(.url)): by \(.author.login)"' > closed_prs.txt
+          gh pr list --state closed --limit 5 --json number,title,url,author --jq '.[] | "- PR #\(.number): [\(.title)](\(.url)) - by @\(.author.login)"' > closed_prs.txt
           cat closed_prs.txt >> CHANGELOG.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       # Create GitHub Release
       - name: Create GitHub Release
