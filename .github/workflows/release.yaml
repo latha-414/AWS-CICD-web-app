@@ -29,6 +29,19 @@ jobs:
           fetch-depth: 0
           ref: pr-branch
 
+      # Fetch closed PR details
+      - name: Get closed PRs
+        id: get_prs
+        uses: cloudposse-github-actions/get-pr@v2.0.0
+        with:
+          state: closed
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Format PR details and append to changelog
+      - name: Format and Append PR Details to Changelog
+        run: |
+          echo "PR #${{ steps.get_prs.outputs.number }}: [${{ steps.get_prs.outputs.title }}](${{ steps.get_prs.outputs.url }}) by @${{ steps.get_prs.outputs.author }}" >> CHANGELOG.md
+
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -51,26 +64,6 @@ jobs:
           git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      # Get Closed PR Details using Peter Evans Action
-      - name: Get Closed PRs
-        uses: peter-evans/closed-pull-requests@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          state: closed
-          limit: 5
-        id: pr_details
-
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
-        run: |
-          for pr in ${{ steps.pr_details.outputs.pull_requests }}; do
-            PR_NUMBER=$(echo $pr | jq -r '.number')
-            PR_TITLE=$(echo $pr | jq -r '.title')
-            PR_URL=$(echo $pr | jq -r '.url')
-            PR_AUTHOR=$(echo $pr | jq -r '.author.login')
-            echo "PR #$PR_NUMBER: [$PR_TITLE]($PR_URL) by @$PR_AUTHOR" >> CHANGELOG.md
-          done
 
       # Create GitHub Release
       - name: Create GitHub Release
