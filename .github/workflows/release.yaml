@@ -60,6 +60,12 @@ jobs:
           route: GET /repos/${{ github.repository }}/pulls
           state: closed
           token: ${{ secrets.GITHUB_TOKEN }}
+
+       # Append PR Details to Changelog (appending after fetching PR details)
+      - name: Append PR Details to Changelog
+        run: |
+          echo "PR Details:" >> CHANGELOG.md
+          echo "${{ steps.fetch_pr_details.outputs.body }}" >> CHANGELOG.md
           
       # Create GitHub Release
       - name: Create GitHub Release
