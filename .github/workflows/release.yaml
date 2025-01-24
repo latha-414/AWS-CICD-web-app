@@ -62,9 +62,10 @@ jobs:
         uses: 8BitJonny/gh-get-current-pr@3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          filterOutClosed: false  # Include closed PRs
+          filterOutDraft: true   # Include draft PRs
          
 
-      # Debug PR Details
       - name: Debug PR Details
         run: |
           echo "PR Found: ${{ steps.get_pr.outputs.pr_found }}"
@@ -73,18 +74,14 @@ jobs:
           echo "PR User: ${{ steps.get_pr.outputs.pr_user_login }}"
           echo "PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}"
           echo "PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at }}"
-
-      # Append PR Details to Changelog
-      - name: Append PR Details to Changelog
-        if: steps.get_pr.outputs.pr_found == 'true'
+    
+      - name: Add to Changelog (if merged)
+        if: steps.get_pr.outputs.pr_merged_at != ''
         run: |
           echo "### Merged Pull Requests" >> CHANGELOG.md
           echo "- PR Number: ${{ steps.get_pr.outputs.number }}" >> CHANGELOG.md
-          echo "- PR Branch: ${{ github.event.inputs.branch }}" >> CHANGELOG.md
-          echo "- PR Title: ${{ steps.get_pr.outputs.pr_title || 'Title not available' }}" >> CHANGELOG.md
-          echo "- PR Author: ${{ steps.get_pr.outputs.pr_user_login || 'Author not available' }}" >> CHANGELOG.md
-          echo "- PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at || 'Not merged' }}" >> CHANGELOG.md
-          echo "- PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at || 'Not closed' }}" >> CHANGELOG.md
+          echo "- PR Title: ${{ steps.get_pr.outputs.pr_title }}" >> CHANGELOG.md
+          echo "- PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
