@@ -51,12 +51,14 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Trim Changelog for Release Body
-      - name: Trim Changelog for Release Body
+   # Minimal Changelog for Release Body
+      - name: Generate Minimal Release Body
         run: |
           echo "### Release Notes" > RELEASE_BODY.md
-          head -n 50 CHANGELOG.md >> RELEASE_BODY.md
-          echo "Full changelog available in the repository." >> RELEASE_BODY.md
+          echo "This release includes important updates and fixes." >> RELEASE_BODY.md
+          echo "" >> RELEASE_BODY.md
+          echo "For the full changelog, visit: [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)" >> RELEASE_BODY.md
+
 
       # Fetch Merged PRs using GitHub API
       - name: Fetch Merged PRs
