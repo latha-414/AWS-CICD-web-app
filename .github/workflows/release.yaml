@@ -31,15 +31,32 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
 
-      # Fetch PR details using octokit/request-action
+      # Fetch PR details using GitHub Script
       - name: Fetch PR Details
         id: fetch_pr_details
-        uses: octokit/request-action@v2.x
+        uses: actions/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.inputs.pr_number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr_number = ${{ github.event.inputs.pr_number }};
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+            return {
+              title: pr.title,
+              body: pr.body,
+              number: pr.number
+            };
+
+      # Output the fetched PR details to debug
+      - name: Debug PR Details
+        run: |
+          echo "PR Title: ${{ steps.fetch_pr_details.outputs.title }}"
+          echo "PR Body: ${{ steps.fetch_pr_details.outputs.body }}"
+          echo "PR Number: ${{ steps.fetch_pr_details.outputs.number }}"
 
       # Tag and Release
       - name: Tag and Release
