@@ -52,33 +52,35 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Get merged PR details
-      - name: Get Merged PR Details
+     # Get Closed PR Details using the search API with is:closed filter
+      - name: Get Closed PR Details
         uses: yu-iskw/merged-pr-info-action@v1.0.1
-        id: merged-pr-info
+        id: closed-pr-info
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Output Merged PR Details (Optional)
-      - name: Display Merged PR Details
-        run: |
-          echo "PR Number: ${{ steps.merged-pr-info.outputs.pull-request-number }}"
-          echo "PR Title: ${{ steps.merged-pr-info.outputs.pull-request-title }}"
-          echo "PR Creator: ${{ steps.merged-pr-info.outputs.pull-request-creator }}"
-          echo "PR Body: ${{ steps.merged-pr-info.outputs.pull-request-body }}"
-          echo "PR URL: ${{ steps.merged-pr-info.outputs.pull-request-url }}
-
-           # Check if PR Number is available
-          if [ -z "$PR_NUMBER" ]; then
-            echo "Error: PR details not found."
-            exit 1
-          fi
           
-          # Append PR details to the changelog
-          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+      # Output Closed PR Details (Optional)
+      - name: Display Closed PR Details
+        run: |
+          echo "PR Number: ${{ steps.closed-pr-info.outputs.pull-request-number }}"
+          echo "PR Title: ${{ steps.closed-pr-info.outputs.pull-request-title }}"
+          echo "PR Creator: ${{ steps.closed-pr-info.outputs.pull-request-creator }}"
+          echo "PR Body: ${{ steps.closed-pr-info.outputs.pull-request-body }}"
+          echo "PR URL: ${{ steps.closed-pr-info.outputs.pull-request-url }}"
 
+      # Append Closed PR Details to Changelog
+      - name: Append PR Details to Changelog
+        run: |
+          PR_NUMBER="${{ steps.closed-pr-info.outputs.pull-request-number }}"
+          PR_TITLE="${{ steps.closed-pr-info.outputs.pull-request-title }}"
+          PR_URL="${{ steps.closed-pr-info.outputs.pull-request-url }}"
+          PR_CREATOR="${{ steps.closed-pr-info.outputs.pull-request-creator }}"
+          
+          # Create Changelog with Release Version and PR Details
+          echo "Release ${{ env.NEW_TAG }} Latest" >> CHANGELOG.md
+          echo "### Closed PR Details" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_CREATOR" >> CHANGELOG.md
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
