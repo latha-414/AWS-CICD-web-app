@@ -26,21 +26,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-          ref: pr-branch
-          
-      # Install GitHub CLI
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-      # Authenticate GitHub CLI
-      - name: Authenticate GitHub CLI
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-      # Debug GitHub CLI authentication
-      - name: Debug GitHub CLI Authentication
-        run: gh auth status
+          fetch-depth: 0  # Fetch the full history to tag correctly
+          ref: pr-branch  # Specify the branch to check out (replace `pr-branch` with your branch name)
+
+      # Get Closed and Merged PR Details
+      - name: Get Closed and Merged PR
+        id: get_pr
+        uses: 8BitJonny/gh-get-current-pr@3.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token to authenticate
+          filterOutClosed: false  # Include closed PRs (merged PRs will also be included)
+          filterOutDraft: true  # Exclude draft PRs
+
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -50,7 +47,7 @@ jobs:
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
 
-      # Export the new tag to environment variable
+      # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
@@ -64,30 +61,6 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      
-      - name: Fetch PR Details
-        id: fetch_pr_details
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/pulls
-          state: closed
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Debug the PR Details Output
-      - name: Debug PR Details Output
-        run: |
-          echo "PR Details: ${{ steps.fetch_pr_details.outputs.json }}"
-
-      # Append PR Details to the changelog
-      - name: Append PR Details to Changelog
-        run: |
-          PR_NUMBER="${{ fromJSON(steps.fetch_pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.fetch_pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.fetch_pr_details.outputs.json).url }}"
-          echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE" >> CHANGELOG.md
-
-          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -99,3 +72,16 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Show PR details (for merged PR)
+      - name: Show PR Details
+        if: steps.get_pr.outputs.pr_found == 'true'
+        run: |
+          echo "PR Number: ${{ steps.get_pr.outputs.number }}"
+          echo "PR Title: ${{ steps.get_pr.outputs.pr_title }}"
+          echo "PR URL: ${{ steps.get_pr.outputs.pr_url }}"
+          echo "PR Body: ${{ steps.get_pr.outputs.pr_body }}"
+          echo "PR Created At: ${{ steps.get_pr.outputs.pr_created_at }}"
+          echo "PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}"
+          echo "PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at }}"
+          echo "PR Labels: ${{ steps.get_pr.outputs.pr_labels }}"
