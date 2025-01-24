@@ -73,25 +73,19 @@ jobs:
           state: closed
           token: ${{ secrets.GITHUB_TOKEN }}
 
-       # Debug the PR Details
+      # Debug the PR Details Output
       - name: Debug PR Details Output
         run: |
-          echo "PR Details: ${{ steps.pr_details.outputs.json }}"
-        
-      # Get PR Author using GitHub CLI
-      - name: Get PR Author
-        run: |
-          PR_AUTHOR=$(gh pr view ${{ github.event.number }} --json author --jq '.author.login')
-          echo "PR Author: $PR_AUTHOR"
-          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
+          echo "PR Details: ${{ steps.fetch_pr_details.outputs.json }}"
+
       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
-          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
-          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
+          PR_NUMBER="${{ fromJSON(steps.fetch_pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.fetch_pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.fetch_pr_details.outputs.json).url }}"
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE" >> CHANGELOG.md
 
           
       # Create GitHub Release
