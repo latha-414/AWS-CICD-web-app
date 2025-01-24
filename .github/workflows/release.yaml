@@ -52,23 +52,15 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      # Fetch Closed PR Details via GitHub API
-      - name: Get Closed PR Details
-        id: closed_pr_details
-        run: |
-          # Fetch closed PRs from the GitHub API
-          PR_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed")
-
-          # Parse and extract relevant PR details (e.g., title and merged date)
-          PR_TITLES=$(echo "$PR_DETAILS" | jq -r '.[] | "\(.title) - Merged at: \(.merged_at)"')
-
-          # Output PR details for debugging
-          echo "Closed PR Titles: $PR_TITLES"
-
-          # Export the formatted PR details to environment variable
-          echo "CLOSED_PRS=$PR_TITLES" >> $GITHUB_ENV
-
+      
+      - name: Fetch PR Details
+        id: fetch_pr_details
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/pulls
+          state: closed
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
