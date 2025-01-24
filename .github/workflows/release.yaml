@@ -72,6 +72,8 @@ jobs:
           echo "PR Number: ${{ steps.get_pr.outputs.number }}"
           echo "PR Title: ${{ steps.get_pr.outputs.pr_title }}"
           echo "PR User: ${{ steps.get_pr.outputs.pr_user_login }}"
+          echo "PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}"
+          echo "PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at }}"
 
       # Append PR Details to Changelog
       - name: Append PR Details to Changelog
@@ -82,6 +84,8 @@ jobs:
           echo "- PR Branch: ${{ github.event.inputs.branch }}" >> CHANGELOG.md
           echo "- PR Title: ${{ steps.get_pr.outputs.pr_title || 'Title not available' }}" >> CHANGELOG.md
           echo "- PR Author: ${{ steps.get_pr.outputs.pr_user_login || 'Author not available' }}" >> CHANGELOG.md
+          echo "- PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at || 'Not merged' }}" >> CHANGELOG.md
+          echo "- PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at || 'Not closed' }}" >> CHANGELOG.md
 
       # Create GitHub Release
       - name: Create GitHub Release
