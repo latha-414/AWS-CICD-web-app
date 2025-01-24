@@ -61,11 +61,12 @@ jobs:
           state: closed
           token: ${{ secrets.GITHUB_TOKEN }}
 
-       # Append PR Details to the changelog
+      # Parse PR Details and Append to Changelog
       - name: Append PR Details to Changelog
         run: |
           echo "### PR Details" >> CHANGELOG.md
-          echo "- PR [#${{ steps.pr_details.outputs.number }}](" ${{ steps.pr_details.outputs.url }} "): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
+          echo "${{ steps.fetch_pr_details.outputs.data }}" > pr_details.json
+          jq -r '.[] | "- PR [#" + (.number|tostring) + "](" + .html_url + "): " + .title + " by @" + .user.login' pr_details.json >> CHANGELOG.md
           
       # Create GitHub Release
       - name: Create GitHub Release
