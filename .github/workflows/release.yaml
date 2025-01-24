@@ -28,7 +28,19 @@ jobs:
         with:
           fetch-depth: 0
           ref: pr-branch
-
+          
+      # Install GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+      # Authenticate GitHub CLI
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+      # Debug GitHub CLI authentication
+      - name: Debug GitHub CLI Authentication
+        run: gh auth status
       # Tag and Release
       - name: Tag and Release
         id: tag_release
@@ -61,16 +73,25 @@ jobs:
           state: closed
           token: ${{ secrets.GITHUB_TOKEN }}
 
+       # Debug the PR Details
+      - name: Debug PR Details Output
+        run: |
+          echo "PR Details: ${{ steps.pr_details.outputs.json }}"
+        
+      # Get PR Author using GitHub CLI
+      - name: Get PR Author
+        run: |
+          PR_AUTHOR=$(gh pr view ${{ github.event.number }} --json author --jq '.author.login')
+          echo "PR Author: $PR_AUTHOR"
+          echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
+      # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
+          PR_NUMBER="${{ fromJSON(steps.pr_details.outputs.json).number }}"
+          PR_TITLE="${{ fromJSON(steps.pr_details.outputs.json).title }}"
+          PR_URL="${{ fromJSON(steps.pr_details.outputs.json).url }}"
           echo "### PR Details" >> CHANGELOG.md
-          echo "${{ steps.fetch_pr_details.outputs.data }}" > pr_details.json
-
-          # Simple loop to parse and append PR details
-          jq -r '
-            .[] | 
-           "- PR [#" + (.number|tostring) + "](" + .html_url + "): " + .title + " by @" + .user.login
-           ' pr_details.json >> CHANGELOG.md || echo "No valid PR details found." >> CHANGELOG.md
+          echo "- PR [#$PR_NUMBER]($PR_URL): $PR_TITLE by @$PR_AUTHOR" >> CHANGELOG.md
 
           
       # Create GitHub Release
