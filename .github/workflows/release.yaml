@@ -27,61 +27,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
-
-      # Tag and Release
-      - name: Tag and Release
-        id: tag_release
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.release_type }}
-          tag_prefix: v
-
-      # Export the new tag
-      - name: Get New Tag
-        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
-
-      # Generate Changelog
-      - name: Generate Changelog
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          tag-prefix: v
-          output-file: CHANGELOG.md
-
-    
-    name: Tag and Release
-
-on:
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
-
-permissions:
-  contents: write
-  pull-requests: read
-
-jobs:
-  create_release:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Checkout the repository
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       # Tag and Release
       - name: Tag and Release
@@ -125,19 +70,6 @@ jobs:
         run: |
           echo "### Merged PRs" >> CHANGELOG.md
           echo "${{ steps.fetch_merged_prs.outputs.data }}" >> CHANGELOG.md
-      # Create GitHub Release
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: "${{ env.NEW_TAG }}"
-          release_name: "Release ${{ env.NEW_TAG }}"
-          body_path: CHANGELOG.md
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-     
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
