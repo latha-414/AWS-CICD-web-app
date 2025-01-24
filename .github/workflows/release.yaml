@@ -61,11 +61,11 @@ jobs:
           state: closed
           token: ${{ secrets.GITHUB_TOKEN }}
 
-       # Append PR Details to Changelog (appending after fetching PR details)
+       # Append PR Details to the changelog
       - name: Append PR Details to Changelog
         run: |
-          echo "PR Details:" >> CHANGELOG.md
-          echo "${{ steps.fetch_pr_details.outputs.body }}" >> CHANGELOG.md
+          echo "### PR Details" >> CHANGELOG.md
+          echo "- PR [#${{ steps.pr_details.outputs.number }}](" ${{ steps.pr_details.outputs.url }} "): ${{ steps.pr_details.outputs.title }} by @${{ steps.pr_details.outputs.author }}" >> CHANGELOG.md
           
       # Create GitHub Release
       - name: Create GitHub Release
