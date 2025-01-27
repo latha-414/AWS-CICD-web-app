@@ -1,5 +1,8 @@
 name: Tag and release
 on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
   workflow_dispatch:
     inputs:
       release_type:
