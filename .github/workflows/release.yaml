@@ -1,16 +1,61 @@
-
-name: example
-
+name: Tag and release
 on:
-  pull_request:
-    types: [opened]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+
+permissions:
+  contents: write
 
 jobs:
-  example:
-    name: Release management comment
+  create_release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Comment on PR
-        uses: tiwanari/list-merged-pull-requests@develop
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          token: ${{ github.token }}
+          fetch-depth: 0
+          git-branch: pr-branch 
+
+      - name: Tag and Release
+        id: tag_release
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: ${{ github.event.inputs.release_type }}
+          tag_prefix: v
+
+      - name: Get New Tag
+        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+
+      - name: Generate Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
+          tag-prefix: v
+          output-file: CHANGELOG.md
+
+      - name: List Merged Pull Requests
+        uses: tiwanari/list-merged-pull-requests@v1.9
+     
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "${{ env.NEW_TAG }}"
+          release_name: "Release ${{ env.NEW_TAG }}"
+          body: "${{ steps.changelog.outputs.changelog }}"
+          draft: false
+          prerelease: false
