@@ -1,5 +1,4 @@
 name: Tag and Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -12,28 +11,21 @@ on:
           - major
           - minor
           - patch
-      branch:
-        description: "Branch to release from"
-        required: true
-        default: "main"
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   create_release:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.branch }}
+          git-branch: QM-508 
 
-      # Tag and Release
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
@@ -42,55 +34,43 @@ jobs:
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
 
-      # Export the new tag
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      # Generate Changelog
+      - name: Fetch Closed and Merged PRs
+        id: fetch_pr
+        uses: 8BitJonny/gh-get-current-pr@3.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          filterOutClosed: false  # Fetch closed PRs
+          filterOutDraft: true    # Exclude draft PRs
+
+      - name: Log PR Details
+        if: steps.fetch_pr.outputs.pr_found == 'true'
+        run: |
+          echo "Found PR Details:"
+          echo "PR Number: ${{ steps.fetch_pr.outputs.number }}"
+          echo "PR URL: ${{ steps.fetch_pr.outputs.pr_url }}"
+          echo "PR Title: ${{ steps.fetch_pr.outputs.pr_title }}"
+          echo "PR State: Closed or Merged"
+          echo "PR Merged At: ${{ steps.fetch_pr.outputs.pr_merged_at }}"
+
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: QM-508 
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      # Get Closed and Merged PR Details
-      - name: Get Closed and Merged PR
-        id: get_pr
-        uses: 8BitJonny/gh-get-current-pr@3.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          filterOutClosed: false  # Include closed PRs
-          filterOutDraft: true   # Include draft PRs
-         
-
-      - name: Debug PR Details
-        run: |
-          echo "PR Found: ${{ steps.get_pr.outputs.pr_found }}"
-          echo "PR Number: ${{ steps.get_pr.outputs.number }}"
-          echo "PR Title: ${{ steps.get_pr.outputs.pr_title }}"
-          echo "PR User: ${{ steps.get_pr.outputs.pr_user_login }}"
-          echo "PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}"
-          echo "PR Closed At: ${{ steps.get_pr.outputs.pr_closed_at }}"
-    
-      - name: Add to Changelog (if merged)
-        if: steps.get_pr.outputs.pr_merged_at != ''
-        run: |
-          echo "### Merged Pull Requests" >> CHANGELOG.md
-          echo "- PR Number: ${{ steps.get_pr.outputs.number }}" >> CHANGELOG.md
-          echo "- PR Title: ${{ steps.get_pr.outputs.pr_title }}" >> CHANGELOG.md
-          echo "- PR Merged At: ${{ steps.get_pr.outputs.pr_merged_at }}" >> CHANGELOG.md
-
-      # Create GitHub Release
+     
       - name: Create GitHub Release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body_path: CHANGELOG.md
+          body: "${{ steps.changelog.outputs.changelog }}"
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
