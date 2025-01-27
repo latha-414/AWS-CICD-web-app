@@ -45,6 +45,10 @@ jobs:
           filterOutClosed: false  # Ensure this is set to false to include closed PRs
           filterOutDraft: true   # Optional: Filter out draft PRs if needed
 
+      - name: Debug PR Details
+        run: |
+          echo "PR Details: ${{ steps.pr_details.outputs }}"  # Log all outputs of the PR details step
+
       - name: Log PR Details
         if: steps.pr_details.outputs.pr_found == 'true'
         run: |
