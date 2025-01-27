@@ -1,8 +1,20 @@
 name: Tag and release
 on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Select the type of release"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
   pull_request:
     types: [opened, synchronize]
-    branches: [main]  # Change to the branch you're working on
+    branches:
+      - main  # This can be updated to your target branch
 
 permissions:
   contents: write
@@ -16,7 +28,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
