@@ -1,5 +1,9 @@
-name: Tag and release
+name: Create Release
+
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       release_type:
@@ -16,7 +20,7 @@ permissions:
   contents: write
 
 jobs:
-  create_release:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +29,20 @@ jobs:
         with:
           fetch-depth: 0
           git-branch: pr-branch
+
+      - name: Get Merged Pull Request Details
+        id: get-merged-pull-request
+        uses: actions-ecosystem/action-get-merged-pull-request@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Release Label
+        id: release-label
+        if: ${{ steps.get-merged-pull-request.outputs.title != null }}
+        uses: actions-ecosystem/action-release-label@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: ${{ steps.get-merged-pull-request.outputs.labels }}
 
       - name: Tag and Release
         id: tag_release
@@ -46,28 +64,6 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Get Merged Pull Request Information
-        id: get_prs
-        uses: coin-tracker/get-merged-pull-request@v1.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          base-branch: pr-branch
-          limit: 5
-
-      - name: Display PR Information
-        run: |
-          echo "PR Details: ${{ steps.get_prs.outputs.pull-requests }}"
-          # Loop through PR details if needed
-          # Example:
-          # for pr in ${{ steps.get_prs.outputs.pull-requests }}; do
-          #   echo "PR URL: ${pr.url}"
-          # done
-
-      - name: Append Merged PRs to Changelog
-        run: |
-          echo "Merged PRs:" >> CHANGELOG.md
-          echo "${{ steps.get_prs.outputs.pull-requests }}" >> CHANGELOG.md
-
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -75,11 +71,15 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: |
-            ### Changelog
-            ${{ steps.changelog.outputs.changelog }}
-            
-            ### Merged Pull Requests:
-            ${{ steps.get_prs.outputs.pull-requests }}
+          body: "${{ steps.changelog.outputs.changelog }}"
           draft: false
           prerelease: false
+
+      - name: Add Comment to PR
+        uses: actions-ecosystem/action-create-comment@v1
+        if: ${{ steps.tag_release.outputs.new_tag != null }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.get-merged-pull-request.outputs.number }}
+          body: |
+            The new version [${{ env.NEW_TAG }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }}) has been released :tada:
