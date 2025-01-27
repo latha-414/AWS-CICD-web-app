@@ -37,19 +37,22 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Get Merged PRs (Closed)
-        id: get_merged_prs
+      - name: Fetch Merged PRs (Closed)
+        id: fetch_merged_prs
+        uses: devops-infra/action-pull-request@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          state: closed
+          filter_by: merged
+
+      - name: Log Merged PRs
         run: |
-          merged_prs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed" | jq -r '.[] | select(.merged_at != null) | "PR Number: \(.number)\nPR Title: \(.title)\nPR Merged At: \(.merged_at)\nPR URL: \(.html_url)\n"')
-          
-          echo "Merged PRs: $merged_prs"
-          echo "$merged_prs" > merged_prs.txt  # Store PR details in a file
+          echo "Merged PR Details: ${{ steps.fetch_merged_prs.outputs.pull_requests }}"
 
       - name: Append Merged PR Details to Changelog
         run: |
           echo "### Merged PR Details" >> CHANGELOG.md
-          cat merged_prs.txt >> CHANGELOG.md  # Append PR details from file to changelog
+          echo "${{ steps.fetch_merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
 
       - name: Generate Changelog
         id: changelog
