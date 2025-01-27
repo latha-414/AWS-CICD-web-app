@@ -71,14 +71,18 @@ jobs:
           echo "PR URL: ${{ steps.PR.outputs.pr_url }}" >> CHANGELOG.md
           echo "PR Merged At: ${{ steps.PR.outputs.pr_merged_at }}" >> CHANGELOG.md
 
+      - name: Store Changelog Content
+        id: changelog_content
+        run: echo "CHANGELOG_CONTENT=$(cat CHANGELOG.md)" >> $GITHUB_ENV
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG_CONTENT: ${{ env.CHANGELOG_CONTENT }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: |
-            $(cat CHANGELOG.md)  # This will correctly read the contents of CHANGELOG.md and pass it to the release body
+          body: ${{ env.CHANGELOG_CONTENT }}  # Use the changelog content here
           draft: false
           prerelease: false
