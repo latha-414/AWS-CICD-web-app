@@ -51,16 +51,17 @@ jobs:
         uses: coin-tracker/get-merged-pull-request@v1.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          base-branch: pr-branch
+          limit: 5
 
       - name: Display PR Information
         run: |
-          echo "PR Title: ${{ steps.get_pr.outputs.title }}"
-          echo "PR Body: ${{ steps.get_pr.outputs.body }}"
-          echo "PR Number: ${{ steps.get_pr.outputs.number }}"
-          echo "PR URL: ${{ steps.get_pr.outputs.html_url }}"
-          echo "PR Labels: ${{ steps.get_pr.outputs.labels }}"
-          echo "PR Assignees: ${{ steps.get_pr.outputs.assignees }}"
-
+          echo "PR Details: ${{ steps.get_prs.outputs.pull-requests }}"
+          # Loop through PR details if needed
+          # Example:
+          # for pr in ${{ steps.get_prs.outputs.pull-requests }}; do
+          #   echo "PR URL: ${pr.url}"
+          # done
 
       - name: Append Merged PRs to Changelog
         run: |
@@ -74,6 +75,11 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.changelog }}"
+          body: |
+            ### Changelog
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ### Merged Pull Requests:
+            ${{ steps.get_prs.outputs.pull-requests }}
           draft: false
           prerelease: false
