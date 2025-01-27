@@ -50,10 +50,14 @@ jobs:
               per_page: 100
             });
             const mergedPrs = prs.data.filter(pr => pr.merged_at !== null);
-            return mergedPrs.map(pr => `PR #${pr.number}: ${pr.title} by @${pr.user.login}`).join('\n');
+            const prList = mergedPrs.map(pr => `PR #${pr.number}: ${pr.title} by @${pr.user.login}`).join('\n');
+            console.log(`Fetched Merged PRs: \n${prList}`);
+            return prList;
 
       - name: Log PR Details
-        run: echo "Merged PRs:${{ steps.pr_details.outputs.result }}"
+        run: |
+          echo "Fetched PR Details: ${{ steps.pr_details.outputs.result }}"
+          echo "Merged PRs: ${{ steps.pr_details.outputs.result }}"
 
       - name: Generate Changelog
         id: changelog
