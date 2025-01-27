@@ -64,10 +64,10 @@ jobs:
           echo "${{ steps.merged_prs.outputs.pull_requests }}" > merged_prs_debug.txt
         continue-on-error: true
 
-      - name: Append Merged PRs to Changelog
+      - name: Append Merged PRs to Release Body
         run: |
-          echo -e "\n## Merged Pull Requests\n" >> CHANGELOG.md
-          echo "${{ steps.merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
+          echo -e "\n## Merged Pull Requests\n" >> release_notes.md
+          echo "${{ steps.merged_prs.outputs.pull_requests }}" >> release_notes.md
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
