@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   create_release:
@@ -36,28 +37,19 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Fetch Merged PRs
-        id: pr_details
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed',
-              base: 'main', // Change this to your default branch if it's not 'main'
-              per_page: 100
-            });
-            const mergedPrs = prs.data.filter(pr => pr.merged_at !== null);
-            const prList = mergedPrs.map(pr => `PR #${pr.number}: ${pr.title} by @${pr.user.login}`).join('\n');
-            console.log(`Fetched Merged PRs: \n${prList}`);
-            return prList;
-
-      - name: Log PR Details
+      - name: Get Merged PRs (Closed)
+        id: get_merged_prs
         run: |
-          echo "Fetched PR Details: ${{ steps.pr_details.outputs.result }}"
-          echo "Merged PRs: ${{ steps.pr_details.outputs.result }}"
+          merged_prs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed" | jq -r '.[] | select(.merged_at != null) | "PR Number: \(.number)\nPR Title: \(.title)\nPR Merged At: \(.merged_at)\nPR URL: \(.html_url)\n"')
+          
+          echo "Merged PRs: $merged_prs"
+          echo "$merged_prs" >> $GITHUB_ENV
+
+      - name: Append Merged PR Details to Changelog
+        run: |
+          echo "### Merged PR Details" >> CHANGELOG.md
+          echo "${{ env.merged_prs }}" >> CHANGELOG.md
 
       - name: Generate Changelog
         id: changelog
@@ -68,18 +60,22 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Append Merged PRs to Changelog
+      - name: Set Changelog Content to Environment Variable
+        id: changelog_content
         run: |
-          echo "\n### Merged PRs" >> CHANGELOG.md
-          echo "${{ steps.pr_details.outputs.result }}" >> CHANGELOG.md
+          changelog_content=$(cat CHANGELOG.md)
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$changelog_content" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG_CONTENT: ${{ env.CHANGELOG_CONTENT }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.changelog }}"
+          body: ${{ env.CHANGELOG_CONTENT }}
           draft: false
           prerelease: false
