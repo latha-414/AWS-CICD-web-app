@@ -11,8 +11,6 @@ on:
           - major
           - minor
           - patch
-  pull_request:
-    types: [opened, synchronize, closed]  # Trigger on PR events
 
 permissions:
   contents: write
@@ -39,19 +37,30 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Get Current PR
-        id: PR
+      - name: Get Closed and Merged PRs
+        id: pr_details
         uses: 8BitJonny/gh-get-current-pr@3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          filterOutClosed: false  # Ensure this is set to false to include closed PRs
+          filterOutDraft: true   # Optional: Filter out draft PRs if needed
 
       - name: Log PR Details
-        if: steps.PR.outputs.pr_found == 'true'
+        if: steps.pr_details.outputs.pr_found == 'true'
         run: |
-          echo "PR Number: ${{ steps.PR.outputs.number }}"
-          echo "PR Title: ${{ steps.PR.outputs.pr_title }}"
-          echo "PR URL: ${{ steps.PR.outputs.pr_url }}"
-          echo "PR Merged At: ${{ steps.PR.outputs.pr_merged_at }}"
+          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
+          echo "PR Title: ${{ steps.pr_details.outputs.pr_title }}"
+          echo "PR URL: ${{ steps.pr_details.outputs.pr_url }}"
+          echo "PR Merged At: ${{ steps.pr_details.outputs.pr_merged_at }}"
+
+      - name: Append Merged PR Details to Changelog
+        if: steps.pr_details.outputs.pr_found == 'true' && steps.pr_details.outputs.pr_merged_at != ''
+        run: |
+          echo "### Merged PR Details" >> CHANGELOG.md
+          echo "PR Number: ${{ steps.pr_details.outputs.number }}" >> CHANGELOG.md
+          echo "PR Title: ${{ steps.pr_details.outputs.pr_title }}" >> CHANGELOG.md
+          echo "PR URL: ${{ steps.pr_details.outputs.pr_url }}" >> CHANGELOG.md
+          echo "PR Merged At: ${{ steps.pr_details.outputs.pr_merged_at }}" >> CHANGELOG.md
 
       - name: Generate Changelog
         id: changelog
@@ -61,15 +70,6 @@ jobs:
           git-branch: ${{ github.ref_name }}
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      - name: Append PR Details to Changelog
-        if: steps.PR.outputs.pr_found == 'true'
-        run: |
-          echo "### Pull Request Information" >> CHANGELOG.md
-          echo "PR Number: ${{ steps.PR.outputs.number }}" >> CHANGELOG.md
-          echo "PR Title: ${{ steps.PR.outputs.pr_title }}" >> CHANGELOG.md
-          echo "PR URL: ${{ steps.PR.outputs.pr_url }}" >> CHANGELOG.md
-          echo "PR Merged At: ${{ steps.PR.outputs.pr_merged_at }}" >> CHANGELOG.md
 
       - name: Set Changelog Content to Environment Variable
         id: changelog_content
@@ -87,6 +87,6 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: ${{ env.CHANGELOG_CONTENT }}  # Use the changelog content here
+          body: ${{ env.CHANGELOG_CONTENT }}
           draft: false
           prerelease: false
