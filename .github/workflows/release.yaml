@@ -44,12 +44,12 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed" | jq -r '.[] | select(.merged_at != null) | "PR Number: \(.number)\nPR Title: \(.title)\nPR Merged At: \(.merged_at)\nPR URL: \(.html_url)\n"')
           
           echo "Merged PRs: $merged_prs"
-          echo "$merged_prs" >> $GITHUB_ENV
+          echo "$merged_prs" > merged_prs.txt  # Store PR details in a file
 
       - name: Append Merged PR Details to Changelog
         run: |
           echo "### Merged PR Details" >> CHANGELOG.md
-          echo "${{ env.merged_prs }}" >> CHANGELOG.md
+          cat merged_prs.txt >> CHANGELOG.md  # Append PR details from file to changelog
 
       - name: Generate Changelog
         id: changelog
