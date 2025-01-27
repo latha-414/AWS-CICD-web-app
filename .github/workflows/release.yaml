@@ -1,20 +1,9 @@
 name: Tag and release
 on:
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-        - major
-        - minor
-        - patch
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize]  # Triggers when a PR is created or updated
     branches:
-      - main  # Adjust if needed
+      - main  # Replace with your target branch (e.g., 'main', 'dev', etc.)
 
 permissions:
   contents: write
@@ -50,16 +39,21 @@ jobs:
           output-file: CHANGELOG.md
 
       - name: List Merged PRs
+        id: merged_prs
         uses: tiwanari/list-merged-pull-requests@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'pull_request'
+      
+      # Debug step to check PR output
+      - name: Check PR Output
+        run: |
+          echo "Merged PRs: ${{ steps.merged_prs.outputs.pull_requests }}"
 
       - name: Append Merged PRs to Changelog
         run: |
           echo -e "\n## Merged Pull Requests\n" >> CHANGELOG.md
           echo "${{ steps.merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
-
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
