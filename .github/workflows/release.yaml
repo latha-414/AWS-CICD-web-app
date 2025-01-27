@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   create_release:
@@ -37,34 +36,15 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Get Closed and Merged PRs
+      - name: Get Merged PRs
         id: pr_details
-        uses: 8BitJonny/gh-get-current-pr@3.0.0
+        uses: peter-evans/gh-pr-merge-status@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          filterOutClosed: false  # Ensure this is set to false to include closed PRs
-          filterOutDraft: true   # Optional: Filter out draft PRs if needed
-
-      - name: Debug PR Details
-        run: |
-          echo "PR Details: ${{ steps.pr_details.outputs }}"  # Log all outputs of the PR details step
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.ref_name }}  # Branch to compare the merged PRs against
 
       - name: Log PR Details
-        if: steps.pr_details.outputs.pr_found == 'true'
-        run: |
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}"
-          echo "PR Title: ${{ steps.pr_details.outputs.pr_title }}"
-          echo "PR URL: ${{ steps.pr_details.outputs.pr_url }}"
-          echo "PR Merged At: ${{ steps.pr_details.outputs.pr_merged_at }}"
-
-      - name: Append Merged PR Details to Changelog
-        if: steps.pr_details.outputs.pr_found == 'true' && steps.pr_details.outputs.pr_merged_at != ''
-        run: |
-          echo "### Merged PR Details" >> CHANGELOG.md
-          echo "PR Number: ${{ steps.pr_details.outputs.number }}" >> CHANGELOG.md
-          echo "PR Title: ${{ steps.pr_details.outputs.pr_title }}" >> CHANGELOG.md
-          echo "PR URL: ${{ steps.pr_details.outputs.pr_url }}" >> CHANGELOG.md
-          echo "PR Merged At: ${{ steps.pr_details.outputs.pr_merged_at }}" >> CHANGELOG.md
+        run: echo "Merged PRs: ${{ steps.pr_details.outputs.merged_prs }}"
 
       - name: Generate Changelog
         id: changelog
@@ -75,22 +55,20 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: Set Changelog Content to Environment Variable
-        id: changelog_content
+      - name: Append Merged PRs to Changelog
         run: |
-          changelog_content=$(cat CHANGELOG.md)
-          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$changelog_content" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "\n### Merged PRs" >> CHANGELOG.md
+          for pr in ${{ steps.pr_details.outputs.merged_prs }}; do
+            echo "- PR #$pr" >> CHANGELOG.md
+          done
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGELOG_CONTENT: ${{ env.CHANGELOG_CONTENT }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: ${{ env.CHANGELOG_CONTENT }}
+          body: "${{ steps.changelog.outputs.changelog }}"
           draft: false
           prerelease: false
