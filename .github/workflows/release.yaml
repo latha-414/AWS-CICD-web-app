@@ -78,6 +78,7 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "$(cat CHANGELOG.md)"  # Use the updated changelog with PR details
+          body: |
+            $(cat CHANGELOG.md)  # This will correctly read the contents of CHANGELOG.md and pass it to the release body
           draft: false
           prerelease: false
