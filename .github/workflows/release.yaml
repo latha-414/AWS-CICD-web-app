@@ -51,8 +51,7 @@ jobs:
         uses: coin-tracker/get-merged-pull-request@v1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-branch: pr-branch  # Adjust as per your branch
-          limit: 5  # Number of merged PRs to fetch
+          
 
       - name: Append Merged PRs to Changelog
         run: |
