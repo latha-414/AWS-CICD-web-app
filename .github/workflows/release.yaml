@@ -71,9 +71,13 @@ jobs:
           echo "PR URL: ${{ steps.PR.outputs.pr_url }}" >> CHANGELOG.md
           echo "PR Merged At: ${{ steps.PR.outputs.pr_merged_at }}" >> CHANGELOG.md
 
-      - name: Store Changelog Content
+      - name: Set Changelog Content to Environment Variable
         id: changelog_content
-        run: echo "CHANGELOG_CONTENT=$(cat CHANGELOG.md)" >> $GITHUB_ENV
+        run: |
+          changelog_content=$(cat CHANGELOG.md)
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$changelog_content" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
