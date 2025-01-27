@@ -14,7 +14,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     branches:
-      - main  # This can be updated to your target branch
+      - main  # Adjust if needed
 
 permissions:
   contents: write
@@ -53,6 +53,7 @@ jobs:
         uses: tiwanari/list-merged-pull-requests@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'pull_request'
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
