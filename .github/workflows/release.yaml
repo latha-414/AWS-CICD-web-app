@@ -37,23 +37,25 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Fetch Closed and Merged PRs
-        id: fetch_pr
+      - name: Get Current PR
+        id: PR
         uses: 8BitJonny/gh-get-current-pr@3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          filterOutClosed: false  # Fetch closed PRs
-          filterOutDraft: true    # Exclude draft PRs
-
+      
       - name: Log PR Details
-        if: steps.fetch_pr.outputs.pr_found == 'true'
+        if: steps.PR.outputs.pr_found == 'true'
         run: |
-          echo "Found PR Details:"
-          echo "PR Number: ${{ steps.fetch_pr.outputs.number }}"
-          echo "PR URL: ${{ steps.fetch_pr.outputs.pr_url }}"
-          echo "PR Title: ${{ steps.fetch_pr.outputs.pr_title }}"
-          echo "PR State: Closed or Merged"
-          echo "PR Merged At: ${{ steps.fetch_pr.outputs.pr_merged_at }}"
+          echo "PR Number: ${{ steps.PR.outputs.number }}"
+          echo "PR Title: ${{ steps.PR.outputs.pr_title }}"
+          echo "PR URL: ${{ steps.PR.outputs.pr_url }}"
+          echo "PR Merged At: ${{ steps.PR.outputs.pr_merged_at }}"
+        env:
+          prMergedAt: ${{ steps.PR.outputs.pr_merged_at }}
+
+      - name: Check If PR is Merged
+        if: steps.PR.outputs.pr_found == 'true' && steps.PR.outputs.pr_merged_at != ''
+        run: echo "This PR is merged!"
 
       - name: Generate Changelog
         id: changelog
