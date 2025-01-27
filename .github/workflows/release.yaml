@@ -1,4 +1,4 @@
-name: Tag and Release
+name: Tag and release
 on:
   workflow_dispatch:
     inputs:
@@ -8,13 +8,12 @@ on:
         default: "patch"
         type: choice
         options:
-          - major
-          - minor
-          - patch
+        - major
+        - minor
+        - patch
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   create_release:
@@ -25,6 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          git-branch: QM-508 
 
       - name: Tag and Release
         id: tag_release
@@ -37,46 +37,34 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Fetch Merged PRs (Closed)
-        id: fetch_merged_prs
-        uses: kentaro-m/auto-merge-action@v1
+      - name: List Merged Pull Requests
+        id: list_merged_prs
+        uses: tiwanari/list-merged-pull-requests@v1.9
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          git-branch: pr-branch
 
-      - name: Log Merged PRs
+      - name: Display Merged PRs
         run: |
-          echo "Merged PR Details: ${{ steps.fetch_merged_prs.outputs.pull_requests }}"
-
-      - name: Append Merged PR Details to Changelog
-        run: |
-          echo "### Merged PR Details" >> CHANGELOG.md
-          echo "${{ steps.fetch_merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
+          echo "Merged PRs:"
+          echo "${{ steps.list_merged_prs.outputs.merged_prs }}"
 
       - name: Generate Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: ${{ github.ref_name }}
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
-
-      - name: Set Changelog Content to Environment Variable
-        id: changelog_content
-        run: |
-          changelog_content=$(cat CHANGELOG.md)
-          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$changelog_content" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
+     
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGELOG_CONTENT: ${{ env.CHANGELOG_CONTENT }}
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: ${{ env.CHANGELOG_CONTENT }}
+          body: "${{ steps.changelog.outputs.changelog }}"
           draft: false
           prerelease: false
