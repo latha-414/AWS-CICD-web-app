@@ -50,7 +50,7 @@ jobs:
         id: get_prs
         uses: coin-tracker/get-merged-pull-request@v1.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Append Merged PRs to Changelog
         run: |
