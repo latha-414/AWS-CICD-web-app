@@ -55,6 +55,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'pull_request'
 
+      - name: Append Merged PRs to Changelog
+        run: |
+          echo -e "\n## Merged Pull Requests\n" >> CHANGELOG.md
+          echo "${{ steps.merged_prs.outputs.pull_requests }}" >> CHANGELOG.md
+
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
