@@ -57,7 +57,7 @@ jobs:
 
       - name: Fetch Pull Request Details
         id: fetch_pr_details
-        uses: timheuer/gha-pull-request-info@v2.0
+        uses: tiwanari/list-merged-pull-requests@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-numbers: ${{ steps.list_prs.outputs.pullRequestNumbers }}
