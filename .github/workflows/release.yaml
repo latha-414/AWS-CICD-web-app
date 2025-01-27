@@ -44,7 +44,7 @@ jobs:
           base: ${{ github.ref_name }}  # Branch to compare the merged PRs against
 
       - name: Log PR Details
-        run: echo "Merged PRs: ${{ steps.pr_details.outputs.merged_prs }}"
+        run: echo "Merged PRs:${{ steps.pr_details.outputs.merged_prs }}"
 
       - name: Generate Changelog
         id: changelog
