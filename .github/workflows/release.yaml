@@ -53,7 +53,7 @@ jobs:
             return mergedPrs.map(pr => `PR #${pr.number}: ${pr.title} by @${pr.user.login}`).join('\n');
 
       - name: Log PR Details
-        run: echo "Merged PRs: ${{ steps.pr_details.outputs.result }}"
+        run: echo "Merged PRs:${{ steps.pr_details.outputs.result }}"
 
       - name: Generate Changelog
         id: changelog
