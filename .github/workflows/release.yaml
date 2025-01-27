@@ -56,7 +56,6 @@ jobs:
         uses: tiwanari/list-merged-pull-requests@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event_name == 'pull_request'
 
       - name: Debug Merged PRs Output
         run: |
@@ -68,6 +67,9 @@ jobs:
         run: |
           echo -e "\n## Merged Pull Requests\n" >> release_notes.md
           echo "${{ steps.merged_prs.outputs.pull_requests }}" >> release_notes.md
+
+      - name: Debug Release Notes
+        run: cat release_notes.md
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
