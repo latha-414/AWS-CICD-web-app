@@ -55,8 +55,15 @@ jobs:
           state: 'closed'
           window: '24'
 
-      - name: Output Closed Pull Requests
-        run: echo "Closed PRs:${{ steps.list_prs.outputs.pullRequestNumbers }}"
+      - name: Fetch Pull Request Details
+        id: fetch_pr_details
+        uses: timheuer/gha-pull-request-info@v2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-numbers: ${{ steps.list_prs.outputs.pullRequestNumbers }}
+
+      - name: Output Closed Pull Request Details
+        run: echo "Closed PR Details:${{ steps.fetch_pr_details.outputs.details }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -65,6 +72,6 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.changelog }}\nClosed PRs: ${{ steps.list_prs.outputs.pullRequestNumbers }}"
+          body: "${{ steps.changelog.outputs.changelog }}\nClosed PRs:\n${{ steps.fetch_pr_details.outputs.details }}"
           draft: false
           prerelease: false
