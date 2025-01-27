@@ -36,15 +36,24 @@ jobs:
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
 
-      - name: Get Merged PRs
+      - name: Fetch Merged PRs
         id: pr_details
-        uses: peter-evans/gh-pr-merge-status@v2
+        uses: octokit/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ github.ref_name }}  # Branch to compare the merged PRs against
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              base: 'main', // Change to your default branch
+              per_page: 100
+            });
+            const mergedPrs = prs.data.filter(pr => pr.merged_at !== null);
+            return mergedPrs.map(pr => `PR #${pr.number}: ${pr.title} by @${pr.user.login}`).join('\n');
 
       - name: Log PR Details
-        run: echo "Merged PRs:${{ steps.pr_details.outputs.merged_prs }}"
+        run: echo "Merged PRs: ${{ steps.pr_details.outputs.result }}"
 
       - name: Generate Changelog
         id: changelog
@@ -58,9 +67,7 @@ jobs:
       - name: Append Merged PRs to Changelog
         run: |
           echo "\n### Merged PRs" >> CHANGELOG.md
-          for pr in ${{ steps.pr_details.outputs.merged_prs }}; do
-            echo "- PR #$pr" >> CHANGELOG.md
-          done
+          echo "${{ steps.pr_details.outputs.result }}" >> CHANGELOG.md
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
