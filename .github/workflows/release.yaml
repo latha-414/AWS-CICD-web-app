@@ -47,23 +47,16 @@ jobs:
           tag-prefix: v
           output-file: CHANGELOG.md
 
-      - name: List All Closed Pull Requests in Last 24 Hours
-        id: list_prs
-        uses: andrea-armstrong/github-list-pull-requests@v1.0.0
+      - name: Fetch Detailed Pull Request Info
+        id: fetch_prs
+        uses: mondata-io/github-list-pull-requests@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          state: 'closed'
-          window: '24'
-
-      - name: Fetch Pull Request Details
-        id: fetch_pr_details
-        uses: marten-denneboom/closed-pr-details@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-numbers: ${{ steps.list_prs.outputs.pullRequestNumbers }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          state: closed
+          since: '1 day ago'
 
       - name: Output Closed Pull Requests
-        run: echo "Closed PR Details:${{ steps.fetch_pr_details.outputs.details }}"
+        run: echo "Closed PR Details: ${{ steps.fetch_prs.outputs.pullRequests }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -72,6 +65,6 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.changelog }}\nClosed PR Details: ${{ steps.fetch_pr_details.outputs.details }}"
+          body: "${{ steps.changelog.outputs.changelog }}\nClosed PR Details: ${{ steps.fetch_prs.outputs.pullRequests }}"
           draft: false
           prerelease: false
