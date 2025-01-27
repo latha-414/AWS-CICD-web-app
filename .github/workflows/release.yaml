@@ -63,7 +63,7 @@ jobs:
           pull-request-numbers: ${{ steps.list_prs.outputs.pullRequestNumbers }}
 
       - name: Output Closed Pull Requests
-        run: echo "Closed PR Details: ${{ steps.fetch_pr_details.outputs.details }}"
+        run: echo "Closed PR Details:${{ steps.fetch_pr_details.outputs.details }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
