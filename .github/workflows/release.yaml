@@ -49,7 +49,7 @@ jobs:
 
       - name: List All Closed Pull Requests in Last 24 Hours
         id: list_prs
-        uses: actions/github-list-pull-requests@v1.0
+        uses: andrea-armstrong/github-list-pull-requests@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           state: 'closed'
