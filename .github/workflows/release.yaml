@@ -1,13 +1,12 @@
 name: Tag and Release
 
-# Trigger on pull request events (opened, synchronize) and manually via workflow_dispatch
 on:
   pull_request:
     types: [opened, synchronize]  # Trigger on PR creation or updates
     branches:
       - main  # The branch you're targeting for pull requests
 
-  workflow_dispatch:  # Allow manual triggering of the workflow
+  workflow_dispatch:
     inputs:
       release_type:
         description: "Select the type of release"
@@ -58,6 +57,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'pull_request'
+
+      - name: Debug Merged PRs Output
+        run: |
+          echo "Merged PRs: ${{ steps.merged_prs.outputs.pull_requests }}"
+          echo "${{ steps.merged_prs.outputs.pull_requests }}" > merged_prs_debug.txt
+        continue-on-error: true
 
       - name: Append Merged PRs to Changelog
         run: |
