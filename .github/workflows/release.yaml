@@ -38,7 +38,7 @@ jobs:
 
       - name: Fetch Merged PRs
         id: pr_details
-        uses: octokit/github-script@v6
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -46,7 +46,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'closed',
-              base: 'main', // Change to your default branch
+              base: 'main', // Change this to your default branch if it's not 'main'
               per_page: 100
             });
             const mergedPrs = prs.data.filter(pr => pr.merged_at !== null);
