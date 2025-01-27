@@ -56,7 +56,7 @@ jobs:
           window: '24'
 
       - name: Output Closed Pull Requests
-        run: echo "Closed PRs: ${{ steps.list_prs.outputs.pullRequestNumbers }}"
+        run: echo "Closed PRs:${{ steps.list_prs.outputs.pullRequestNumbers }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
