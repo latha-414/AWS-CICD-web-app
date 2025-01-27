@@ -52,6 +52,16 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Display PR Information
+        run: |
+          echo "PR Title: ${{ steps.get_pr.outputs.title }}"
+          echo "PR Body: ${{ steps.get_pr.outputs.body }}"
+          echo "PR Number: ${{ steps.get_pr.outputs.number }}"
+          echo "PR URL: ${{ steps.get_pr.outputs.html_url }}"
+          echo "PR Labels: ${{ steps.get_pr.outputs.labels }}"
+          echo "PR Assignees: ${{ steps.get_pr.outputs.assignees }}"
+
+
       - name: Append Merged PRs to Changelog
         run: |
           echo "Merged PRs:" >> CHANGELOG.md
