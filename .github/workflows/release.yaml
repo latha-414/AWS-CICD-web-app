@@ -2,24 +2,12 @@ name: Tag and Release
 
 on:
   pull_request:
-    types: [opened, synchronize]  # Trigger on PR creation or updates
+    types: [opened, synchronize]
     branches:
-      - main  # The branch you're targeting for pull requests
-
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: "Select the type of release"
-        required: true
-        default: "patch"  # Default to 'patch' versioning
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
+      - main
 
 permissions:
-  contents: write  # Needed for creating releases
+  contents: write
 
 jobs:
   create_release:
@@ -29,15 +17,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensure the full commit history is available
+          fetch-depth: 0
 
       - name: Tag and Release
         id: tag_release
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.release_type }}  # Use the manual input for release type
-          tag_prefix: v  # Tag prefix for versions
+          default_bump: patch
+          tag_prefix: v
 
       - name: Get New Tag
         run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
@@ -47,7 +35,7 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch  # The branch you are working on (you can change as needed)
+          git-branch: pr-branch
           tag-prefix: v
           output-file: CHANGELOG.md
 
