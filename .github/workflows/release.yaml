@@ -1,9 +1,7 @@
-name: Create Release
+
+name: Tag and release
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       release_type:
@@ -20,7 +18,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  create_release:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,20 +27,6 @@ jobs:
         with:
           fetch-depth: 0
           git-branch: pr-branch
-
-      - name: Get Merged Pull Request Details
-        id: get-merged-pull-request
-        uses: actions-ecosystem/action-get-merged-pull-request@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set Release Label
-        id: release-label
-        if: ${{ steps.get-merged-pull-request.outputs.title != null }}
-        uses: actions-ecosystem/action-release-label@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ steps.get-merged-pull-request.outputs.labels }}
 
       - name: Tag and Release
         id: tag_release
@@ -57,13 +41,12 @@ jobs:
 
       - name: Generate Changelog
         id: changelog
-        uses: TriPSs/conventional-changelog-action@v5
+        uses: janheinrichmerker/action-github-changelog-generator@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: pr-branch
-          tag-prefix: v
-          output-file: CHANGELOG.md
-
+          output: './CHANGELOG.md'
+     
+     
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -71,15 +54,7 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: "Release ${{ env.NEW_TAG }}"
-          body: "${{ steps.changelog.outputs.changelog }}"
+          body: |
+            $(cat ./CHANGELOG.md)  # Directly include the changelog content
           draft: false
           prerelease: false
-
-      - name: Add Comment to PR
-        uses: actions-ecosystem/action-create-comment@v1
-        if: ${{ steps.tag_release.outputs.new_tag != null }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ steps.get-merged-pull-request.outputs.number }}
-          body: |
-            The new version [${{ env.NEW_TAG }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }}) has been released :tada:
