@@ -1,5 +1,4 @@
 name: Tag and Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -22,22 +21,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: pr-branch
-
-      # Fetch PR details using octokit/request-action
-      - name: Fetch PR Details
-        id: fetch_pr_details
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/pulls
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          PR_NUMBER: ${{ github.event.inputs.pr_number }} # Add input to specify PR number or use logic to identify the closed PR
 
       # Tag and Release
       - name: Tag and Release
@@ -47,6 +34,28 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: ${{ github.event.inputs.release_type }}
           tag_prefix: v
+
+      - name: Get New Tag
+        run: echo "NEW_TAG=${{ steps.tag_release.outputs.new_tag }}" >> $GITHUB_ENV
+
+      - name: Generate Changelog
+        id: changelog
+        uses: janheinrichmerker/action-github-changelog-generator@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          output: './CHANGELOG.md'
+
+         
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "${{ env.NEW_TAG }}"
+          release_name: "Release ${{ env.NEW_TAG }}"
+          body: "${{ steps.changelog.outputs.changelog }}"
+          draft: false
+          prerelease: false
 
       # Export the new tag
       - name: Get New Tag
@@ -69,14 +78,4 @@ jobs:
           echo "PR Body: ${{ steps.fetch_pr_details.outputs.body }}" >> CHANGELOG.md
           echo "PR Number: ${{ steps.fetch_pr_details.outputs.number }}" >> CHANGELOG.md
 
-      # Create GitHub Release
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: "${{ env.NEW_TAG }}"
-          release_name: "Release ${{ env.NEW_TAG }}"
-          body_path: CHANGELOG.md
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
